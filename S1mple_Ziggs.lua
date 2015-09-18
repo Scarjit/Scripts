@@ -1,13 +1,23 @@
+--[[
+	S1mple Ziggs by S1mple
+	
+	Credit's:
+	Orianna for helping me out with the Orbwalker Detection
+	PvPSuite for the Keydown Fix
+	KuroXNeko for the Banner on my Thread
+
+]]--
+
 local autoupdate = false --Set to "true" for autoupdate
 local iskeydownfix = true
-local version = "1.6"
+local version = "1.7"
 local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
 local Changelog_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.changelog?rand="..math.random(1,10000)
 local Update_URL = "https://"..Update_HOST..Update_PATH
-
+versions = {"0", "1.5","1.6","1.7"}
 
 myHero = GetMyHero()
 if myHero.charName ~= 'Ziggs' then return end
@@ -29,7 +39,6 @@ require "VPrediction"
 	currentXN = 0
 	currentYN = 0
 	currentZN = 0
-	
 --END INI VARS
 
 --Keydown Fix
@@ -73,7 +82,10 @@ function findorbwalker() --Thanks to http://forum.botoflegends.com/user/431842-o
 end
 
 function Update()
-	if not autoupdate then return end
+	if not autoupdate then 
+		p("Autoupdate's disabled")
+	return 
+	end
 		p("Updating S1mple_Ziggs")
 		local ServerData = GetWebResult(Update_HOST, "/Scarjit/Scripts/master/S1mple_Ziggs.version")
 		if ServerData then
@@ -102,9 +114,9 @@ function OnLoad()
 	Config:addParam("active", "Activated", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("hc", "Accuracy (Default: 2)", SCRIPT_PARAM_SLICE, 2, -1, 5, 1)
 	Config:addParam("version", "Current Version", SCRIPT_PARAM_INFO, version)
-	Config:addParam("changelog", "Display Changelog", SCRIPT_PARAM_ONOFF, false)
+	Config:addParam("otherchangelog", "Choose Changelog", SCRIPT_PARAM_LIST, 0, versions) --Change on Update
+	Config:addParam("dspotherchanglelog", "Display selected Changelog", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("leagueversion", "Build for League of Legends Version: ", SCRIPT_PARAM_INFO, lolversion)
-	
 	
 	Config:addTS(ts)
 	Config:addSubMenu("Draws", "draws")
@@ -250,9 +262,9 @@ if Config.rst.rstslide == 100 then
 	end
 end
 
-if Config.changelog then
-	Config.changelog = false
-	Changelog()
+if Config.dspotherchanglelog then
+	Config.dspotherchanglelog = false
+	Changelog(Config.otherchangelog)
 end
 
 if SAC~=true and SxOrb~= true and GetGameTimer() <= 100 and myHero.dead and not Config.active then return end
@@ -463,23 +475,46 @@ function OnUnload()
 	p("Unloaded")
 end
 
-function Changelog()
+function Changelog(selectedversion)
 	local b_currentVersion = false
+	local b_chnotfound = true
 	local ServerData = GetWebResult(Update_HOST, Changelog_PATH)
+	local index = -1
+	selectedversion = versions[tonumber(selectedversion)]
+	
+	for key,value in pairs(versions) do
+		if value == selectedversion then 
+			index = key
+		end
+	end
+	if index == -1 then 
+		p("Could not find Version: "..selectedversion) 
+		return 
+	end
+	
 	if ServerData then
 		tabl = lines(ServerData)
 		for i,v in pairs(tabl) do
-			if v == version then
+			if v == selectedversion then
 				b_currentVersion = true
+				b_chnotfound = false
 				print("<font color=\"#FFD700\">Version: </font>"..v)
 			else
-				if b_currentVersion == true then
+				if v == versions[index+1] then 
+					b_currentVersion = false
+				end
+				if b_currentVersion then
 					p(v)
 				end
 			end
 		end
 	else
 		p("Could not connect to "..Update_HOST)
+	end
+	if b_chnotfound then
+		if selectedversion ~= "0" then
+			p("Could not find Changelog for Version: </font>"..selectedversion) 
+		end
 	end
 end
 
