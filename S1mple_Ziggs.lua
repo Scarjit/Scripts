@@ -17,7 +17,7 @@ local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.rando
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
 local Changelog_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.changelog?rand="..math.random(1,10000)
 local Update_URL = "https://"..Update_HOST..Update_PATH
-versions = {"0", "1.5","1.6","1.7"}
+versions = {"0", "1.5","1.6","1.7","1.8"}
 
 myHero = GetMyHero()
 if myHero.charName ~= 'Ziggs' then return end
