@@ -7,10 +7,10 @@
 	KuroXNeko for the Banner on my Thread
 
 ]]--
-
+local chkupdates = false
 local autoupdate = false --Set to "true" for autoupdate
 local iskeydownfix = true
-local version = "1.7"
+local version = "1.8"
 local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
@@ -39,6 +39,8 @@ require "VPrediction"
 	currentXN = 0
 	currentYN = 0
 	currentZN = 0
+	tlsarray = {"LRTS"}
+	rpreds = {"VPrediction", "S1mplePredict", "On Target"}
 --END INI VARS
 
 --Keydown Fix
@@ -103,12 +105,35 @@ function Update()
 		else
 			p("Autoupdate failed")
 		end
+end
+
+function ChkUpdate()
+	if not chkupdates return end
+	if autoupdate then return end
+	p("Checking for Updates")
+			local ServerData = GetWebResult(Update_HOST, "/Scarjit/Scripts/master/S1mple_Ziggs.version")
+		if ServerData then
+			ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
+			if ServerVersion then
+				if tonumber(version) < ServerVersion then
+					p("Update found")
+					p("Local Version: "..version" <==> ServerVersion: "..ServerVersion)
+					p("Please update manually or turn autoupdate on")
+				else
+					p("No Update found")
+				end
+			end
+		else
+			p("Update Check failed")
+		end
+	
 end	
 
 function OnLoad()
 
 	p("S1mple_Ziggs Version</font> "..version.." <font color=\"#570BB2\">loading</font>")
 	findorbwalker()
+	ChkUpdate()
 	Update()
 	--Config START
 	Config:addParam("active", "Activated", SCRIPT_PARAM_ONOFF, false)
@@ -131,6 +156,9 @@ function OnLoad()
 	Config.rst:addParam("rsthlp4", "===How to reset===", SCRIPT_PARAM_INFO, "")
 	Config.rst:addParam("rstslide", "Slide to 100 to unlock reset Button", SCRIPT_PARAM_SLICE, 0,0,100,1)
 	Config.rst:addParam("rstbtn", "RESET", SCRIPT_PARAM_ONOFF, false)
+	
+	Config.adv:addSubMenu("Laneclear", "lc")
+	Config.adv.lc:addParam("laneclearpredhealth", "Don't cast spells on Minions below: ", SCRIPT_PARAM_SLICE,5,0,100,1)
 	
 	Config.adv:addSubMenu("Q", "q")	
 	Config.adv.q:addParam("qcollision", "Q Minion Collision", SCRIPT_PARAM_ONOFF, true)
@@ -160,9 +188,30 @@ function OnLoad()
 	Config.adv.e:addParam("fleecast", "Cast in Flee Mode", SCRIPT_PARAM_ONOFF, true)
 	
 	Config.adv:addSubMenu("R", "r")
-	Config.adv.r:addParam("predictmove", "Predict's enemy Pos for Forceult", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.r:addParam("rinfo1", "Use the Sliders below to use different", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo2", "Predictions, based on Target Distance.", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo3", "===========WARNING============", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo4", "Do not put Phase 1 above Phase 2 or", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo5", "Phase 2 above Phase 3.", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo6", "Otherwise it might break the Script", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo7", "===============================", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("phase1", "Phase 1", SCRIPT_PARAM_SLICE, 600, 0, 5300, 1)
+	Config.adv.r:addParam("phase2", "Phase 2", SCRIPT_PARAM_SLICE, 2500, 0, 5300, 1)
+	Config.adv.r:addParam("phase3", "Phase 3", SCRIPT_PARAM_SLICE, 5300, 0, 5300, 1)
+	Config.adv.r:addParam("phase1pred", "Phase 1 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
+	Config.adv.r:addParam("phase2pred", "Phase 2 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
+	Config.adv.r:addParam("phase3pred", "Phase 3 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
+	Config.adv.r:addParam("rrand", "Additional Random Distance: " , SCRIPT_PARAM_SLICE, 0, 0, 250, 1)
+	Config.adv.r:addParam("tsl", "Target Selection Mode:" , SCRIPT_PARAM_LIST, 0, tlsarray) --NYI
+	Config.adv.r:addParam("rinfo8", "If you choose VPrediction, please choose", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo9", "a HitChance below", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("phase1hs", "Phase 1 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
+	Config.adv.r:addParam("phase2hs", "Phase 2 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
+	Config.adv.r:addParam("phase3hs", "Phase 3 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
 	
 	Config.human:addParam("delayflee", "Delay Double W in Fleemode", SCRIPT_PARAM_SLICE, 0, 0, 4, 1)
+	
+	
 	Config.draws:addParam("drawq", "Draw Q",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("draww", "Draw W",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("drawe", "Draw E",SCRIPT_PARAM_ONOFF,false)
@@ -174,7 +223,7 @@ function OnLoad()
 --	Config.draws:addParam("waypoints", "Draw Waypoints", SCRIPT_PARAM_ONOFF, false)
 	Config.keys:addParam("combo", "Combo Key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 	Config.keys:addParam("harras", "Harras Key", SCRIPT_PARAM_ONKEYDOWN, false, 67)
-	Config.keys:addParam("laneclear", "Lane Clear (Uses Q/E)", SCRIPT_PARAM_ONKEYDOWN, false, 86)
+	Config.keys:addParam("laneclear", "Lane Clear", SCRIPT_PARAM_ONKEYDOWN, false, 86)
 	Config.keys:addParam("lasthit", "Last Hit", SCRIPT_PARAM_ONKEYDOWN, false, 88)
 	Config.keys:addParam("flee", "Flee Key", SCRIPT_PARAM_ONKEYDOWN, false, 71)
 	Config.keys:addParam("forceult", "Forceult", SCRIPT_PARAM_ONKEYDOWN, false, 84)
@@ -196,7 +245,7 @@ X = 0
 Y = 0
 Z = 0
 
-function LongRangeTargetSelector()
+function LongRangeTargetSelector() --Gonna get rewriten
 	local enemyHeros = GetEnemyHeroes()
 	local preftarget = nil
 	for key,value in pairs(enemyHeros) do
@@ -308,6 +357,7 @@ Z = myHero.z
 		local prefminion = nil
 		local prefminion_inrange = 0
 		for key,value in pairs(enemyMinions.objects) do
+			if ((value.health/value.maxHealth)*100) <= Config.adv.lc.laneclearpredhealth then return end
 			prefminion_inrange_N = 0
 			local X1 = value.x
 			local Z1 = value.z
@@ -331,14 +381,18 @@ Z = myHero.z
 			end
 			
 		end
+		local b_castlc = false
 		if not prefminion then return end
-		if Config.adv.q.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.laneclearminmana then
+		if myHero:CanUseSpell(SPELL_1) == READY and b_castlc == false and Config.adv.q.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.laneclearminmana then
+			b_castlc = true
 			CastQ(prefminion)
 		end
-		if Config.adv.w.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.laneclearminmana then
+		if myHero:CanUseSpell(SPELL_2) == READY and b_castlc == false and Config.adv.w.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.laneclearminmana then
+			b_castlc = true
 			CastW(prefminion)
 		end
-		if Config.adv.e.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.laneclearminmana then
+		if myHero:CanUseSpell(SPELL_3) == READY and b_castlc == false and Config.adv.e.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.laneclearminmana then
+			b_castlc = true
 			CastE(prefminion)
 		end
 	end
@@ -358,18 +412,17 @@ Z = myHero.z
 	if Config.keys.forceult == true then
 		CastR()
 	end
+	
 end
 
 function OnDraw()
 if Config.active == false then return end
 	ts:update()
 	if ts.target ~= nil then	
-		DrawText("Normal Target: "..ts.target.charName, 18, 100, 140, c_red)
-		--DrawText("ts.mode: "..ts.mode, 18, 100, 160, c_red)
-		--DrawText("ts.range: "..ts.range, 18, 100, 180, c_red)
+		DrawText("Normal Target: "..ts.target.charName, 18, 100, 140, c_green)
 	end
 		if LongRangeTargetSelector() ~= nil and myHero:CanUseSpell(SPELL_4) == READY then	
-		DrawText("Ultimate Target: "..LongRangeTargetSelector().charName, 18, 100, 240, c_red)
+		DrawText("Ultimate Target: "..LongRangeTargetSelector().charName, 18, 100, 160, c_green)
 	end
 	
 	if Config.draws.drawq == true and myHero:CanUseSpell(_Q) == 0 then
@@ -401,7 +454,17 @@ if Config.active == false then return end
 	--DrawText("Current Mana: "..myHero.mana, 18,50,80,c_red)
 	--DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 50, 100, c_red)
 	if Config.rst.rstslide == 100 then
-		DrawText("RESET BUTTON UNLOCKED", 38, 500, 250, c_red)
+		DrawText("RESET BUTTON UNLOCKED", 38, 600, 250, c_red)
+	end
+	
+	if Config.adv.r.phase1 > Config.adv.r.phase2 then
+		DrawText("Phase 1 is greater then Phase 2", 20, 100,180, c_red)
+	end
+	if Config.adv.r.phase2 > Config.adv.r.phase3 then
+		DrawText("Phase 2 is greater then Phase 3", 20, 100,200, c_red)
+	end
+	if Config.adv.r.phase1 > Config.adv.r.phase3 then
+		DrawText("Phase 1 is greater then Phase 3", 20, 100,220, c_red)
 	end
 end
 function S1mplePredict(target)
@@ -457,17 +520,87 @@ function CastE(target)
 end
 
 function CastR()
-	target = LongRangeTargetSelector()
+	--[[
+		Phase 1 <= 600
+		Phase 2 601 - 2000
+		Phase 3 2001 - 5300
+		All 3 Phases can be overriden in Advanced Config
+	]]--
+	local randdstx = 0
+	local randdstz = 0
+	
+	local target = LongRangeTargetSelector() -- Next Version Better LRTS
+	
 	if target == nil or target.dead == true or myHero:CanUseSpell(SPELL_4) ~= READY then return end
-	if Config.human.predictmove then
-		preX, preZ = S1mplePredict(target)
-		if preX and preZ then
-			CastSpell(_R,preX, preZ)
-		end
-	else
-		CastSpell(_R,target.x, target.z)
+	local distance = getDistance(myHero.x, myHero.z, target.x, target.z)
+	if not distance then return end
+	if distance >= 6000 then return end
+	
+	if Config.adv.r.rrand ~= 0 then
+		randdstx = math.random((Config.adv.r.rrand*-1),Config.adv.r.rrand)
+		randdstz = math.random((Config.adv.r.rrand*-1),Config.adv.r.rrand)
 	end
-	p("Ultimate casted on: "..target.charName)
+	--PHASE 1
+	if distance < Config.adv.r.phase1 then
+		if rpreds[Config.adv.r.phase1pred] == "VPrediction" then
+			local  CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsR.delay, ZiggsR.width, ZiggsR.range, ZiggsR.speed, myHero, false)
+			if CastPosition and HitChance >= Config.adv.r.phase1hs and GetDistance(CastPosition) <= 5850 then
+				CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+			end
+		end
+		if rpreds[Config.adv.r.phase1pred] == "S1mplePredict" then
+			preX, preZ = S1mplePredict(target)
+			if preX and preZ then
+				CastSpell(_R,preX+randdstx, preZ+randdstz)
+			end
+		end
+		if rpreds[Config.adv.r.phase1pred] == "On Target" then
+			CastSpell(_R,target.x+randdstx, target.z+randdstz)
+		end
+		p("Phase 1 Ultimate casted using: "..rpreds[Config.adv.r.phase1pred])
+	else
+		--PHASE 2
+		if distance < Config.adv.r.phase2 then
+			if rpreds[Config.adv.r.phase2pred] == "VPrediction" then
+				local  CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsR.delay, ZiggsR.width, ZiggsR.range, ZiggsR.speed, myHero, false)
+				if CastPosition and HitChance >= Config.adv.r.phase2hs and GetDistance(CastPosition) <= 5850 then
+					CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+				end
+			end
+			if rpreds[Config.adv.r.phase2pred] == "S1mplePredict" then
+				preX, preZ = S1mplePredict(target)
+				if preX and preZ then
+					CastSpell(_R,preX+randdstx, preZ+randdstz)
+				end
+			end
+			if rpreds[Config.adv.r.phase2pred] == "On Target" then
+				CastSpell(_R,target.x+randdstx, target.z+randdstz)
+			end
+			p("Phase 2 Ultimate casted using: "..rpreds[Config.adv.r.phase2pred])
+			return
+		else
+		--PHASE 3
+			if distance < Config.adv.r.phase3 then
+				if rpreds[Config.adv.r.phase3pred] == "VPrediction" then
+					local  CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsR.delay, ZiggsR.width, ZiggsR.range, ZiggsR.speed, myHero, false)
+					if CastPosition and HitChance >= Config.adv.r.phase3hs and GetDistance(CastPosition) <= 5850 then
+						CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+					end
+				end
+				if rpreds[Config.adv.r.phase3pred] == "S1mplePredict" then
+					preX, preZ = S1mplePredict(target)
+					if preX and preZ then
+						CastSpell(_R,preX+randdstx, preZ+randdstz)
+					end
+				end
+				if rpreds[Config.adv.r.phase3pred] == "On Target" then
+					CastSpell(_R,target.x+randdstx, target.z+randdstz)
+				end
+				p("Phase 3 Ultimate casted using: "..rpreds[Config.adv.r.phase3pred])
+				return
+			end
+		end
+	end
 end
 
 function OnUnload()
@@ -518,11 +651,16 @@ function Changelog(selectedversion)
 	end
 end
 
---[[========= S1mple String Libary =========]]--
+--[[========= S1mple Libary =========]]--
 
 function lines(str)
   local t = {}
   local function helper(line) table.insert(t, line) return "" end
   helper((str:gsub("(.-)\r?\n", helper)))
   return t
+end
+
+function getDistance(X,Y,X1,Y1)
+	--(X-X1)^2+(Z-Z1)^2 <= R^2 if in range
+	return math.sqrt(((X-X1)^2)+((Y-Y1)^2))
 end
