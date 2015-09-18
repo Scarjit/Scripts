@@ -1,0 +1,11 @@
+S1mple_Ziggs Version Log:
+1.5
+	Initial Release
+1.6
+	Advanced Settings, for Q/W/E/R
+		Q Minion Collision
+		Q/W/E/R Cast in Specific Mode
+		Q/W/E only cast if Mana abouve User Config
+	Reset Menu
+	Code cleanup
+	Display Changelog Button --Not yet Working
