@@ -1,8 +1,11 @@
 local autoupdate = false --Set to "true" for autoupdate
-local version = "1.5"
+local iskeydownfix = true
+local version = "1.6"
+local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
+local Changelog_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.changelog?rand="..math.random(1,10000)
 local Update_URL = "https://"..Update_HOST..Update_PATH
 
 
@@ -28,6 +31,25 @@ require "VPrediction"
 	currentZN = 0
 	
 --END INI VARS
+
+--Keydown Fix
+-- Developer: PvPSuite (http://forum.botoflegends.com/user/76516-pvpsuite/)
+local originalKD = _G.IsKeyDown;
+_G.IsKeyDown = function(theKey)
+	if iskeydownfix then
+		if (type(theKey) ~= 'number') then
+			local theNumber = tonumber(theKey);
+			if (theNumber ~= nil) then
+				return originalKD(theNumber);
+			else
+				return originalKD(GetKey(theKey));
+			end;
+		else
+			return originalKD(theKey);
+		end
+	end
+end
+--End Keydown Fix
 
 function p(arg)
 	print("<font color=\"#570BB2\">"..arg.."</font>")
@@ -80,11 +102,54 @@ function OnLoad()
 	Config:addParam("active", "Activated", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("hc", "Accuracy (Default: 2)", SCRIPT_PARAM_SLICE, 2, -1, 5, 1)
 	Config:addParam("version", "Current Version", SCRIPT_PARAM_INFO, version)
+	Config:addParam("changelog", "Display Changelog", SCRIPT_PARAM_ONOFF, false)
+	Config:addParam("leagueversion", "Build for League of Legends Version: ", SCRIPT_PARAM_INFO, lolversion)
+	
+	
 	Config:addTS(ts)
 	Config:addSubMenu("Draws", "draws")
 	Config:addSubMenu("Keys", "keys")
 	Config:addSubMenu("Humanizer", "human")
-	Config.human:addParam("predictmove", "Predict's enemy Pos for Forceult", SCRIPT_PARAM_ONOFF, true)
+	Config:addSubMenu("Advanced", "adv")
+	Config:addSubMenu("Reset", "rst")
+	
+	Config.rst:addParam("rsthlp0", "Resets all Settings to default", SCRIPT_PARAM_INFO, "")
+	Config.rst:addParam("rsthlp1", "This can not be undone", SCRIPT_PARAM_INFO, "")
+	Config.rst:addParam("rsthlp3", "Does not reset Keys", SCRIPT_PARAM_INFO, "")
+	Config.rst:addParam("rsthlp4", "===How to reset===", SCRIPT_PARAM_INFO, "")
+	Config.rst:addParam("rstslide", "Slide to 100 to unlock reset Button", SCRIPT_PARAM_SLICE, 0,0,100,1)
+	Config.rst:addParam("rstbtn", "RESET", SCRIPT_PARAM_ONOFF, false)
+	
+	Config.adv:addSubMenu("Q", "q")	
+	Config.adv.q:addParam("qcollision", "Q Minion Collision", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.q:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.q:addParam("combominmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.q:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.q:addParam("harrasminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.q:addParam("laneclearcast", "Cast in Laneclear Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.q:addParam("laneclearminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	
+	Config.adv:addSubMenu("W", "w")
+	Config.adv.w:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.w:addParam("combominmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.w:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.w:addParam("harrasminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.w:addParam("laneclearcast", "Cast in Laneclear Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.w:addParam("laneclearminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.w:addParam("fleecast", "Cast in Flee Mode", SCRIPT_PARAM_ONOFF, true)
+
+	Config.adv:addSubMenu("E", "e")
+	Config.adv.e:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.e:addParam("combominmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.e:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.e:addParam("harrasminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.e:addParam("laneclearcast", "Cast in Laneclear Mode", SCRIPT_PARAM_ONOFF, true)
+	Config.adv.e:addParam("laneclearminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.e:addParam("fleecast", "Cast in Flee Mode", SCRIPT_PARAM_ONOFF, true)
+	
+	Config.adv:addSubMenu("R", "r")
+	Config.adv.r:addParam("predictmove", "Predict's enemy Pos for Forceult", SCRIPT_PARAM_ONOFF, true)
+	
 	Config.human:addParam("delayflee", "Delay Double W in Fleemode", SCRIPT_PARAM_SLICE, 0, 0, 4, 1)
 	Config.draws:addParam("drawq", "Draw Q",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("draww", "Draw W",SCRIPT_PARAM_ONOFF,false)
@@ -93,13 +158,15 @@ function OnLoad()
 	Config.draws:addParam("drawrmini", "Draw R on Minimap",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("drawenemy", "Draw Selected Enemy", SCRIPT_PARAM_ONOFF, false)
 	Config.draws:addParam("drawenemyult", "Draw Selected Enemy (Forceult)", SCRIPT_PARAM_ONOFF, false)
+
 --	Config.draws:addParam("waypoints", "Draw Waypoints", SCRIPT_PARAM_ONOFF, false)
 	Config.keys:addParam("combo", "Combo Key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-	Config.keys:addParam("harras", "Harras Key", SCRIPT_PARAM_ONKEYDOWN, false, 99)
-	Config.keys:addParam("laneclear", "Lane Clear (Uses Q/E)", SCRIPT_PARAM_ONKEYDOWN, false, 118)
-	Config.keys:addParam("lasthit", "Last Hit", SCRIPT_PARAM_ONKEYDOWN, false, 120)
-	Config.keys:addParam("flee", "Flee Key", SCRIPT_PARAM_ONKEYDOWN, false, 103)
-	Config.keys:addParam("forceult", "Forceult", SCRIPT_PARAM_ONKEYDOWN, false, 103)
+	Config.keys:addParam("harras", "Harras Key", SCRIPT_PARAM_ONKEYDOWN, false, 67)
+	Config.keys:addParam("laneclear", "Lane Clear (Uses Q/E)", SCRIPT_PARAM_ONKEYDOWN, false, 86)
+	Config.keys:addParam("lasthit", "Last Hit", SCRIPT_PARAM_ONKEYDOWN, false, 88)
+	Config.keys:addParam("flee", "Flee Key", SCRIPT_PARAM_ONKEYDOWN, false, 71)
+	Config.keys:addParam("forceult", "Forceult", SCRIPT_PARAM_ONKEYDOWN, false, 84)
+	
 	Config.keys:permaShow("combo")
 	Config.keys:permaShow("harras")
 	Config.keys:permaShow("laneclear")
@@ -139,6 +206,55 @@ function LongRangeTargetSelector()
 end
 
 function OnTick()
+if Config.rst.rstslide ~= 100 and Config.rst.rstbtn == true then 
+	Config.rst.rstbtn = false
+end
+if Config.rst.rstslide == 100 then
+	if Config.rst.rstbtn == true then
+		Config.rst.rstbtn = false
+		Config.rst.rstslide = 0
+		Config.active = true
+		Config.hc = 2
+		Config.adv.q.qcollision = true
+		Config.adv.q.combocast = true
+		Config.adv.q.combominmana = 10
+		Config.adv.q.harrascast = true
+		Config.adv.q.harrasminmana = 10
+		Config.adv.q.laneclearcast = true
+		Config.adv.q.laneclearminmana = 10
+		Config.adv.w.combocast = true
+		Config.adv.w.combominmana = 10
+		Config.adv.w.harrascast = true
+		Config.adv.w.harrasminmana = 10
+		Config.adv.w.laneclearcast = true
+		Config.adv.w.laneclearminmana = 10
+		Config.adv.w.fleecast = true
+		Config.adv.e.combocast = true
+		Config.adv.e.combominmana = 10
+		Config.adv.e.harrascast = true
+		Config.adv.e.harrasminmana = 10
+		Config.adv.e.laneclearcast = true
+		Config.adv.e.laneclearminmana = 10
+		Config.adv.e.fleecast = true
+		Config.adv.r.predictmove = true
+		Config.human.delayflee = 0
+		Config.draws.drawq = false
+		Config.draws.draww = false
+		Config.draws.drawe = false
+		Config.draws.drawr = false
+		Config.draws.drawrmini = false
+		Config.draws.drawenemy = false
+		Config.draws.drawenemyult = false	
+		p("S1mple_Ziggs RESETED")
+		p("Please reconfigure your Settings, before reloading")
+	end
+end
+
+if Config.changelog then
+	Config.changelog = false
+	Changelog()
+end
+
 if SAC~=true and SxOrb~= true and GetGameTimer() <= 100 and myHero.dead and not Config.active then return end
 ts:update()
 X = myHero.x
@@ -149,16 +265,28 @@ Z = myHero.z
 		if ts.target == nil then return end
 		tname = string.upper(string.sub(ts.target.charName, 0, 3))
 		if tname ~= "SRU" then
-			CastQ(ts.target)
-			CastW(ts.target)
-			CastE(ts.target)
+			if Config.adv.q.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.combominmana then
+				CastQ(ts.target)
+			end
+			if Config.adv.w.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.combominmana then
+				CastW(ts.target)
+			end
+			if Config.adv.e.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.combominmana then
+				CastE(ts.target)
+			end
 		end
 	end
 	if Config.keys.harras == true then
 		if ts.target == nil then return end
-		CastQ(ts.target)
-		CastW(ts.target)
-		CastE(ts.target)
+		if Config.adv.q.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.harrasminmana then
+			CastQ(ts.target)
+		end
+		if Config.adv.w.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.harrasminmana then
+			CastW(ts.target)
+		end
+		if Config.adv.e.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.harrasminmana then
+			CastE(ts.target)
+		end
 	end
 	
 	if Config.keys.lasthit == true then return end
@@ -191,16 +319,28 @@ Z = myHero.z
 			end
 			
 		end
-		CastE(prefminion)
-		CastW(prefminion)
+		if not prefminion then return end
+		if Config.adv.q.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.laneclearminmana then
+			CastQ(prefminion)
+		end
+		if Config.adv.w.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.laneclearminmana then
+			CastW(prefminion)
+		end
+		if Config.adv.e.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.laneclearminmana then
+			CastE(prefminion)
+		end
 	end
 	
 	if Config.keys.flee == true then
 		myHero:MoveTo(mousePos.x, mousePos.z)
-		CastE(myHero)
+		if Config.adv.e.fleecast then
+			CastE(myHero)
+		end
 		if os.time() < flee_recasttime then return end
 		flee_recasttime = os.time() + Config.human.delayflee
-		CastW(myHero)
+		if Config.adv.w.fleecast then
+			CastW(myHero)
+		end
 	end
 	
 	if Config.keys.forceult == true then
@@ -245,6 +385,12 @@ if Config.active == false then return end
 	end
 	
 	--DrawText("Current Time: "..os.time(),18,50,50,c_red)
+	--DrawText("Max Mana: "..myHero.maxMana, 18, 50, 60, c_red)
+	--DrawText("Current Mana: "..myHero.mana, 18,50,80,c_red)
+	--DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 50, 100, c_red)
+	if Config.rst.rstslide == 100 then
+		DrawText("RESET BUTTON UNLOCKED", 38, 500, 250, c_red)
+	end
 end
 function S1mplePredict(target)
 	--The Waypoint's are Predicted based on Current Movement
@@ -276,10 +422,10 @@ end
 
 function CastQ(target)
 	if target == nil then return end
-	local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, true)
-	if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsQ.range then
-		CastSpell(_Q,CastPosition.x, CastPosition.z)
-	end
+		local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, Config.adv.q.qcollision)
+		if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsQ.range then
+			CastSpell(_Q,CastPosition.x, CastPosition.z)
+		end
 end
 
 function CastW(target)
@@ -310,4 +456,38 @@ function CastR()
 		CastSpell(_R,target.x, target.z)
 	end
 	p("Ultimate casted on: "..target.charName)
+end
+
+function OnUnload()
+	Config.rst.rstslide = 0
+	p("Unloaded")
+end
+
+function Changelog()
+	local b_currentVersion = false
+	local ServerData = GetWebResult(Update_HOST, Changelog_PATH)
+	if ServerData then
+		tabl = lines(ServerData)
+		for i,v in pairs(tabl) do
+			if v == version then
+				b_currentVersion = true
+				print("<font color=\"#FFD700\">Version: </font>"..v)
+			else
+				if b_currentVersion == true then
+					p(v)
+				end
+			end
+		end
+	else
+		p("Could not connect to "..Update_HOST)
+	end
+end
+
+--[[========= S1mple String Libary =========]]--
+
+function lines(str)
+  local t = {}
+  local function helper(line) table.insert(t, line) return "" end
+  helper((str:gsub("(.-)\r?\n", helper)))
+  return t
 end

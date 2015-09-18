@@ -1,12 +1,12 @@
 S1mple_Ziggs Version Log:
 1.5
 	Initial Release
-	Thanks to </font><font color=\"#FFD700\">Orianna</font><font color=\"#570BB2\">
+	Thanks to Orianna
 1.6
 	Advanced Settings, for Q/W/E/R
 		Q Minion Collision
 		Q/W/E/R Cast in Specific Mode
-		Q/W/E only cast if Mana abouve User Config
-	Reset Menu, please reconfigure your Setting's after Reset.
+		Q/W/E only cast if Mana >= User Config
+	Reset Menu, please reconfigure your Setting's after Reset. --Currently Very Buggy
 	Display Changelog Button
-	Implemented isKeyDown Fix by </font><font color=\"#FFD700\">PvPSuite</font><font color=\"#570BB2\">
+	Implemented isKeyDown Fix by PvPSuite
