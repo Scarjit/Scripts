@@ -108,7 +108,7 @@ function Update()
 end
 
 function ChkUpdate()
-	if not chkupdates return end
+	if not chkupdates then return end
 	if autoupdate then return end
 	p("Checking for Updates")
 			local ServerData = GetWebResult(Update_HOST, "/Scarjit/Scripts/master/S1mple_Ziggs.version")
