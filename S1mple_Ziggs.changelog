@@ -20,4 +20,7 @@ S1mple_Ziggs Version Log:
 	who are about to die. (Hopefully :D ))
 	Both options can be configured
 	Can check for updates without autoupdate
-	
+1.9
+	Added Walljump's
+	Some code cleanup & Bug fixes
+	Removed buggy Reset function

@@ -5,19 +5,25 @@
 	Orianna for helping me out with the Orbwalker Detection
 	PvPSuite for the Keydown Fix
 	KuroXNeko for the Banner on my Thread
-
+	
+	TODO:
+		Additional TargetSelector's
+		Codecleanup
+		Bugfixes
+		????
+		
 ]]--
-local chkupdates = false
+local chkupdates = false --Set to "true" to check for updates without downloading them
 local autoupdate = false --Set to "true" for autoupdate
 local iskeydownfix = true
-local version = "1.8"
+local version = "1.9"
 local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
 local Changelog_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.changelog?rand="..math.random(1,10000)
 local Update_URL = "https://"..Update_HOST..Update_PATH
-versions = {"0", "1.5","1.6","1.7"}
+versions = {"0", "1.5","1.6","1.7","1.8","1.9","2.0"}
 
 myHero = GetMyHero()
 if myHero.charName ~= 'Ziggs' then return end
@@ -108,7 +114,7 @@ function Update()
 end
 
 function ChkUpdate()
-	if not chkupdates return end
+	if not chkupdates then return end
 	if autoupdate then return end
 	p("Checking for Updates")
 			local ServerData = GetWebResult(Update_HOST, "/Scarjit/Scripts/master/S1mple_Ziggs.version")
@@ -139,7 +145,7 @@ function OnLoad()
 	Config:addParam("active", "Activated", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("hc", "Accuracy (Default: 2)", SCRIPT_PARAM_SLICE, 2, -1, 5, 1)
 	Config:addParam("version", "Current Version", SCRIPT_PARAM_INFO, version)
-	Config:addParam("otherchangelog", "Choose Changelog", SCRIPT_PARAM_LIST, 0, versions) --Change on Update
+	Config:addParam("otherchangelog", "Choose Changelog", SCRIPT_PARAM_LIST, 0, versions)
 	Config:addParam("dspotherchanglelog", "Display selected Changelog", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("leagueversion", "Build for League of Legends Version: ", SCRIPT_PARAM_INFO, lolversion)
 	
@@ -148,14 +154,6 @@ function OnLoad()
 	Config:addSubMenu("Keys", "keys")
 	Config:addSubMenu("Humanizer", "human")
 	Config:addSubMenu("Advanced", "adv")
-	Config:addSubMenu("Reset", "rst")
-	
-	Config.rst:addParam("rsthlp0", "Resets all Settings to default", SCRIPT_PARAM_INFO, "")
-	Config.rst:addParam("rsthlp1", "This can not be undone", SCRIPT_PARAM_INFO, "")
-	Config.rst:addParam("rsthlp3", "Does not reset Keys", SCRIPT_PARAM_INFO, "")
-	Config.rst:addParam("rsthlp4", "===How to reset===", SCRIPT_PARAM_INFO, "")
-	Config.rst:addParam("rstslide", "Slide to 100 to unlock reset Button", SCRIPT_PARAM_SLICE, 0,0,100,1)
-	Config.rst:addParam("rstbtn", "RESET", SCRIPT_PARAM_ONOFF, false)
 	
 	Config.adv:addSubMenu("Laneclear", "lc")
 	Config.adv.lc:addParam("laneclearpredhealth", "Don't cast spells on Minions below: ", SCRIPT_PARAM_SLICE,5,0,100,1)
@@ -195,14 +193,16 @@ function OnLoad()
 	Config.adv.r:addParam("rinfo5", "Phase 2 above Phase 3.", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo6", "Otherwise it might break the Script", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo7", "===============================", SCRIPT_PARAM_INFO, "")
-	Config.adv.r:addParam("phase1", "Phase 1", SCRIPT_PARAM_SLICE, 600, 0, 5300, 1)
-	Config.adv.r:addParam("phase2", "Phase 2", SCRIPT_PARAM_SLICE, 2500, 0, 5300, 1)
-	Config.adv.r:addParam("phase3", "Phase 3", SCRIPT_PARAM_SLICE, 5300, 0, 5300, 1)
+	Config.adv.r:addParam("phase1", "Phase 1", SCRIPT_PARAM_SLICE, 1800, 1, 5300, 1)
+	Config.adv.r:addParam("phase2", "Phase 2", SCRIPT_PARAM_SLICE, 3000, 2, 5300, 1)
+	Config.adv.r:addParam("phase3", "Phase 3", SCRIPT_PARAM_SLICE, 5300, 3, 5300, 1)
 	Config.adv.r:addParam("phase1pred", "Phase 1 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
 	Config.adv.r:addParam("phase2pred", "Phase 2 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
 	Config.adv.r:addParam("phase3pred", "Phase 3 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
 	Config.adv.r:addParam("rrand", "Additional Random Distance: " , SCRIPT_PARAM_SLICE, 0, 0, 250, 1)
 	Config.adv.r:addParam("tsl", "Target Selection Mode:" , SCRIPT_PARAM_LIST, 0, tlsarray) --NYI
+	Config.adv.r:addParam("rinfotmp", "Additional Target Selection Modes", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfotmp", "will come with Update 2.0", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo8", "If you choose VPrediction, please choose", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo9", "a HitChance below", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("phase1hs", "Phase 1 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
@@ -211,7 +211,6 @@ function OnLoad()
 	
 	Config.human:addParam("delayflee", "Delay Double W in Fleemode", SCRIPT_PARAM_SLICE, 0, 0, 4, 1)
 	
-	
 	Config.draws:addParam("drawq", "Draw Q",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("draww", "Draw W",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("drawe", "Draw E",SCRIPT_PARAM_ONOFF,false)
@@ -219,14 +218,17 @@ function OnLoad()
 	Config.draws:addParam("drawrmini", "Draw R on Minimap",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("drawenemy", "Draw Selected Enemy", SCRIPT_PARAM_ONOFF, false)
 	Config.draws:addParam("drawenemyult", "Draw Selected Enemy (Forceult)", SCRIPT_PARAM_ONOFF, false)
-
+	Config.draws:addParam("drawwalljumpmini", "Draw Walljumps on Minimap", SCRIPT_PARAM_ONOFF, false)
+	Config.draws:addParam("drawwalljumprange", "Draw Walljump in Range", SCRIPT_PARAM_SLICE, 2000, 0, 10000, 10)
 --	Config.draws:addParam("waypoints", "Draw Waypoints", SCRIPT_PARAM_ONOFF, false)
+	
 	Config.keys:addParam("combo", "Combo Key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 	Config.keys:addParam("harras", "Harras Key", SCRIPT_PARAM_ONKEYDOWN, false, 67)
 	Config.keys:addParam("laneclear", "Lane Clear", SCRIPT_PARAM_ONKEYDOWN, false, 86)
 	Config.keys:addParam("lasthit", "Last Hit", SCRIPT_PARAM_ONKEYDOWN, false, 88)
 	Config.keys:addParam("flee", "Flee Key", SCRIPT_PARAM_ONKEYDOWN, false, 71)
 	Config.keys:addParam("forceult", "Forceult", SCRIPT_PARAM_ONKEYDOWN, false, 84)
+	Config.keys:addParam("walljump", "Walljump", SCRIPT_PARAM_ONKEYDOWN, false, 85)
 	
 	Config.keys:permaShow("combo")
 	Config.keys:permaShow("harras")
@@ -234,18 +236,22 @@ function OnLoad()
 	Config.keys:permaShow("lasthit")
 	Config.keys:permaShow("flee")
 	Config.keys:permaShow("forceult")
+	Config.keys:permaShow("walljump")
 	--Config END
+	
 	flee_recasttime = os.time()
 	waypoints_ctime = os.time()
 	enemyMinions = minionManager(MINION_ENEMY, 600, player, MINION_SORT_HEALTH_ASC)
 	Config.active = true
 	p("S1mple_Ziggs loaded")
+	
 end
+
 X = 0
 Y = 0
 Z = 0
 
-function LongRangeTargetSelector() --Gonna get rewriten
+function LongRangeTargetSelector()
 	local enemyHeros = GetEnemyHeroes()
 	local preftarget = nil
 	for key,value in pairs(enemyHeros) do
@@ -267,49 +273,6 @@ function LongRangeTargetSelector() --Gonna get rewriten
 end
 
 function OnTick()
-if Config.rst.rstslide ~= 100 and Config.rst.rstbtn == true then 
-	Config.rst.rstbtn = false
-end
-if Config.rst.rstslide == 100 then
-	if Config.rst.rstbtn == true then
-		Config.rst.rstbtn = false
-		Config.rst.rstslide = 0
-		Config.active = true
-		Config.hc = 2
-		Config.adv.q.qcollision = true
-		Config.adv.q.combocast = true
-		Config.adv.q.combominmana = 10
-		Config.adv.q.harrascast = true
-		Config.adv.q.harrasminmana = 10
-		Config.adv.q.laneclearcast = true
-		Config.adv.q.laneclearminmana = 10
-		Config.adv.w.combocast = true
-		Config.adv.w.combominmana = 10
-		Config.adv.w.harrascast = true
-		Config.adv.w.harrasminmana = 10
-		Config.adv.w.laneclearcast = true
-		Config.adv.w.laneclearminmana = 10
-		Config.adv.w.fleecast = true
-		Config.adv.e.combocast = true
-		Config.adv.e.combominmana = 10
-		Config.adv.e.harrascast = true
-		Config.adv.e.harrasminmana = 10
-		Config.adv.e.laneclearcast = true
-		Config.adv.e.laneclearminmana = 10
-		Config.adv.e.fleecast = true
-		Config.adv.r.predictmove = true
-		Config.human.delayflee = 0
-		Config.draws.drawq = false
-		Config.draws.draww = false
-		Config.draws.drawe = false
-		Config.draws.drawr = false
-		Config.draws.drawrmini = false
-		Config.draws.drawenemy = false
-		Config.draws.drawenemyult = false	
-		p("S1mple_Ziggs RESETED")
-		p("Please reconfigure your Settings, before reloading")
-	end
-end
 
 if Config.dspotherchanglelog then
 	Config.dspotherchanglelog = false
@@ -412,7 +375,9 @@ Z = myHero.z
 	if Config.keys.forceult == true then
 		CastR()
 	end
-	
+	if Config.keys.walljump == true then
+		Jump()
+	end
 end
 
 function OnDraw()
@@ -426,17 +391,17 @@ if Config.active == false then return end
 	end
 	
 	if Config.draws.drawq == true and myHero:CanUseSpell(_Q) == 0 then
-		DrawCircle3D(X,Y,Z,850,5,c_red) -- Ziggs Min Cast Range Q
-		DrawCircle3D(X,Y,Z,1400,5,c_red) -- Ziggs Max Cast Range Q
+		DrawCircle3D(X,Y,Z,850,5,c_red)
+		DrawCircle3D(X,Y,Z,1400,5,c_red)
 	end
 	if Config.draws.draww == true and myHero:CanUseSpell(_W) == 0 then
-		DrawCircle3D(X,Y,Z,1000,5,c_blue) -- Ziggs W
+		DrawCircle3D(X,Y,Z,1000,5,c_blue)
 	end
 	if Config.draws.drawe == true and myHero:CanUseSpell(_E) == 0 then
-		DrawCircle3D(X,Y,Z,900,5,c_blue)  -- Ziggs E
+		DrawCircle3D(X,Y,Z,900,5,c_blue)
 	end
 	if Config.draws.drawr == true and myHero:CanUseSpell(_R) == 0 then
-		DrawCircle3D(X,Y,Z,5300,5,c_green)  -- Ziggs R
+		DrawCircle3D(X,Y,Z,5300,5,c_green)
 	end
 	if Config.draws.drawrmini == true then
 		DrawCircleMinimap(X,Y,Z,5300,1,c_green)
@@ -449,14 +414,13 @@ if Config.active == false then return end
 			DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,40,5,c_blue)
 	end
 	
-	--DrawText("Current Time: "..os.time(),18,50,50,c_red)
-	--DrawText("Max Mana: "..myHero.maxMana, 18, 50, 60, c_red)
-	--DrawText("Current Mana: "..myHero.mana, 18,50,80,c_red)
-	--DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 50, 100, c_red)
-	if Config.rst.rstslide == 100 then
-		DrawText("RESET BUTTON UNLOCKED", 38, 600, 250, c_red)
-	end
-	
+	--DrawText("Current Time: "..os.time(),18,100,50,c_red)
+	--DrawText("Max Mana: "..myHero.maxMana, 18, 100, 60, c_red)
+	--DrawText("Current Mana: "..myHero.mana, 18,100,80,c_red)
+	--DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 100, 100, c_red)
+	--DrawText("Location:"..tostring(math.round(myHero.x)).." : "..tostring(math.round(myHero.y)).." : "..tostring(math.round(myHero.z)),20, 100,160, c_red)
+	--DrawText("Mouse:"..tostring(math.round(mousePos.x)).." : "..tostring(math.round(mousePos.y)).." : "..tostring(math.round(mousePos.z)),20, 100,180, c_red)
+
 	if Config.adv.r.phase1 > Config.adv.r.phase2 then
 		DrawText("Phase 1 is greater then Phase 2", 20, 100,180, c_red)
 	end
@@ -466,7 +430,12 @@ if Config.active == false then return end
 	if Config.adv.r.phase1 > Config.adv.r.phase3 then
 		DrawText("Phase 1 is greater then Phase 3", 20, 100,220, c_red)
 	end
+	if Config.keys.walljump == true or Config.draws.drawwalljumpmini == true then
+		MarkJumps()
+	end
 end
+
+
 function S1mplePredict(target)
 	--The Waypoint's are Predicted based on Current Movement
 	local currentX = target.x
@@ -604,7 +573,6 @@ function CastR()
 end
 
 function OnUnload()
-	Config.rst.rstslide = 0
 	p("Unloaded")
 end
 
@@ -664,3 +632,57 @@ function getDistance(X,Y,X1,Y1)
 	--(X-X1)^2+(Z-Z1)^2 <= R^2 if in range
 	return math.sqrt(((X-X1)^2)+((Y-Y1)^2))
 end
+
+--[[========= Walljumps =========]]--
+--startX,startY,start,Z,endX,endY,endZ
+jumps = {{5948,52,2458,5424,51,2458},{8348,52,3276,8395,51,2798},{6398,50,3460,6775,49,3814},{11780,-71,4554,11973,52,4753},{9338,-71,4490,8969,53,4541},{9722,71,3908,9659,58,3513},{9446,-62,4146,9124,54,3859},{8022,54,4258,7972,51,4738},{3080,57,6014,3319,52,6224},{3924,51,7408,3865,52,7736},{2224,52,8256,2017,50,7936},{2874,51,9156,2516,52,9107},{2916,52,8348,3168,51,8848},{3078,54,10010,3334,-65,10249},{4024,51,8056,4340,49,8154},{9496,58,3146,9404,49,2810},{8942,52,4962,9142,-71,5402},{7822,52,6008,8012,-11,6240},{5724,52,7806,6024,68,8206},{4624,71,10756,4374,49,11250},{5374,-71,10756,5532,57,11136},{5448,71,10326,584,55,10350},{5284,57,11818,5356,58,12092},{6524,56,12006,6564,54,11722},{8522,53,11356,8172,51,11106},{11072,67,9106,11172,52,9706},{11772,50,8856,11588,64,8726},{11722,56,8356,12075,52,8106},{12620,52,6642,12920,52,6942},{12768,52,6124,13160,57,5946},{12306,59,5826,11972,51,5728},{7124,52,6058,7030,56,5546},{7224,55,10206,7074,56,10606},{6824,56,10950,6418,56,11168},{10712,52,7034,10322,52,6958},{11072,52,7208,11048,52,7500},{11122,52,7806,11022,63,8156},{10772,63,8306,10322,60,8406},{9222,53,7058,8872,-71,6608},{7054,53,8744,6874,-70,8626},{7572,53,8956,7822,52,9306}}
+function MarkJumps()
+	for key, value in pairs(jumps) do
+		local n = ((myHero.x-value[1])^2+(myHero.z-value[3])^2)
+		n = math.sqrt(math.round(n))
+		if n <= Config.draws.drawwalljumprange then
+			if Config.draws.drawwalljumpmini == true then
+				DrawCircleMinimap(value[1], value[2], value[3], 100, 2, c_green)
+				DrawCircleMinimap(value[4], value[5], value[6], 100, 2, c_green)
+			end
+			if Config.keys.walljump == true then
+				DrawCircle3D(value[1], value[2], value[3], 100, 2, c_green)
+				DrawLine3D(value[1],value[2],value[3],value[4],value[5],value[6], 3, c_green)
+				DrawCircle3D(value[4], value[5], value[6], 100, 2, c_green)
+			end
+		end
+	end
+end
+
+function Jump()
+	for key, value in pairs(jumps) do
+		local n = ((mousePos.x-value[1])^2+(mousePos.z-value[3])^2)
+		n = math.sqrt(math.round(n))
+		if n <= 100 then
+				myHero:MoveTo(value[1],value[3])
+		end
+		if math.round(myHero.x) == value[1] and math.round(myHero.z) == value[3] then
+			local v5 = value[4]-value[1]
+			local v6 = value[6]-value[3]
+			local cp1 = (value[1]-v5/2)
+			local cp2 = (value[3]-v6/2)
+			CastSpell(_W,cp1,cp2)
+		end
+	end
+	
+	for key, value in pairs(jumps) do --Reverse jump
+		local n = ((mousePos.x-value[4])^2+(mousePos.z-value[6])^2)
+		n = math.sqrt(math.round(n))
+		if n <= 100 then
+				myHero:MoveTo(value[4],value[6])
+		end
+		if math.round(myHero.x) == value[4] and math.round(myHero.z) == value[6] then
+			local v7 = value[1]-value[4]
+			local v8 = value[3]-value[6]
+			local cp3 = (value[4]-v7/2)
+			local cp4 = (value[6]-v8/2)
+			CastSpell(_W,cp3,cp4)
+		end
+	end
+end
+
