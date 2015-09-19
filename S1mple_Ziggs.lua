@@ -6,24 +6,18 @@
 	PvPSuite for the Keydown Fix
 	KuroXNeko for the Banner on my Thread
 	
-	TODO:
-		Additional TargetSelector's
-		Codecleanup
-		Bugfixes
-		????
-		
 ]]--
 local chkupdates = false --Set to "true" to check for updates without downloading them
 local autoupdate = false --Set to "true" for autoupdate
 local iskeydownfix = true
-local version = "1.9"
+local version = "2.0"
 local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
 local Changelog_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.changelog?rand="..math.random(1,10000)
 local Update_URL = "https://"..Update_HOST..Update_PATH
-versions = {"0", "1.5","1.6","1.7","1.8","1.9","2.0"}
+local versions = {"0", "1.5","1.6","1.7","1.8","1.9","2.0","2.1"}
 
 myHero = GetMyHero()
 if myHero.charName ~= 'Ziggs' then return end
@@ -31,22 +25,22 @@ if myHero.charName ~= 'Ziggs' then return end
 require "VPrediction"
 	
 --BEGINN INI VARS
-	ts = nil
-	c_red = ARGB(255, 255,0,0)
-	c_green = ARGB(255,9,255,0)
-	c_blue = ARGB(255,51,51,255)
-	ZiggsQ = { range = 850, width = 155, speed = 1750, delay = .25, collision=true }
-	ZiggsW = { range = 1000, width = 225, speed = math.huge, delay = .25, collision=false }
-	ZiggsE = { range = 900, width = 350, speed = 1750, delay = .12, collision=false }
-	ZiggsR = { range = 5300, width = 600, speed = 1750, delay = 0.5, collision=false }
-	VP = VPrediction()
-	ts = TargetSelector(TARGET_LESS_CAST, 1500, DAMAGE_MAGIC, true)
-	Config = scriptConfig("S1mple_Ziggs", "s1mple_ziggs")
-	currentXN = 0
-	currentYN = 0
-	currentZN = 0
-	tlsarray = {"LRTS"}
-	rpreds = {"VPrediction", "S1mplePredict", "On Target"}
+	local ts = nil
+	local c_red = ARGB(255, 255,0,0)
+	local c_green = ARGB(255,9,255,0)
+	local c_blue = ARGB(255,51,51,255)
+	local ZiggsQ = { range = 850, width = 155, speed = 1750, delay = .25, collision=true }
+	local ZiggsW = { range = 1000, width = 225, speed = math.huge, delay = .25, collision=false }
+	local ZiggsE = { range = 900, width = 350, speed = 1750, delay = .12, collision=false }
+	local ZiggsR = { range = 5300, width = 600, speed = 1750, delay = 0.5, collision=false }
+	local VP = VPrediction()
+	local ts = TargetSelector(TARGET_LESS_CAST, 1500, DAMAGE_MAGIC, true)
+	local Config = scriptConfig("S1mple_Ziggs", "s1mple_ziggs")
+	local currentXN = 0
+	local currentYN = 0
+	local currentZN = 0
+	local tlsarray = {"Low HP", "High HP" , "Max Damage", "Random", "Low Range", "High Range"}
+	local rpreds = {"VPrediction", "S1mplePredict", "On Target"}
 --END INI VARS
 
 --Keydown Fix
@@ -55,9 +49,9 @@ local originalKD = _G.IsKeyDown;
 _G.IsKeyDown = function(theKey)
 	if iskeydownfix then
 		if (type(theKey) ~= 'number') then
-			local theNumber = tonumber(theKey);
-			if (theNumber ~= nil) then
-				return originalKD(theNumber);
+			local tn = tonumber(theKey);
+			if (tn ~= nil) then
+				return originalKD(tn);
 			else
 				return originalKD(GetKey(theKey));
 			end;
@@ -136,7 +130,6 @@ function ChkUpdate()
 end	
 
 function OnLoad()
-
 	p("S1mple_Ziggs Version</font> "..version.." <font color=\"#570BB2\">loading</font>")
 	findorbwalker()
 	ChkUpdate()
@@ -154,6 +147,9 @@ function OnLoad()
 	Config:addSubMenu("Keys", "keys")
 	Config:addSubMenu("Humanizer", "human")
 	Config:addSubMenu("Advanced", "adv")
+	
+	Config.adv:addParam("debug", "Enable Debug Options", SCRIPT_PARAM_ONOFF, false)
+	Config.adv:addParam("movewalljump", "Move to Mouse in Walljump Mode", SCRIPT_PARAM_ONOFF, true)
 	
 	Config.adv:addSubMenu("Laneclear", "lc")
 	Config.adv.lc:addParam("laneclearpredhealth", "Don't cast spells on Minions below: ", SCRIPT_PARAM_SLICE,5,0,100,1)
@@ -200,9 +196,7 @@ function OnLoad()
 	Config.adv.r:addParam("phase2pred", "Phase 2 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
 	Config.adv.r:addParam("phase3pred", "Phase 3 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
 	Config.adv.r:addParam("rrand", "Additional Random Distance: " , SCRIPT_PARAM_SLICE, 0, 0, 250, 1)
-	Config.adv.r:addParam("tsl", "Target Selection Mode:" , SCRIPT_PARAM_LIST, 0, tlsarray) --NYI
-	Config.adv.r:addParam("rinfotmp", "Additional Target Selection Modes", SCRIPT_PARAM_INFO, "")
-	Config.adv.r:addParam("rinfotmp", "will come with Update 2.0", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("tsl", "Target Selection Mode:" , SCRIPT_PARAM_LIST, 0, tlsarray)
 	Config.adv.r:addParam("rinfo8", "If you choose VPrediction, please choose", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo9", "a HitChance below", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("phase1hs", "Phase 1 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
@@ -210,6 +204,12 @@ function OnLoad()
 	Config.adv.r:addParam("phase3hs", "Phase 3 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
 	
 	Config.human:addParam("delayflee", "Delay Double W in Fleemode", SCRIPT_PARAM_SLICE, 0, 0, 4, 1)
+	Config.human:addParam("hinfo1", "Use the Sliders below to add a", SCRIPT_PARAM_INFO, "")
+	Config.human:addParam("hinfo2", "random Position Variance", SCRIPT_PARAM_INFO, "")
+	Config.human:addParam("qjitter", "Q Jitter", SCRIPT_PARAM_SLICE, 0,1,100,1)
+	Config.human:addParam("wjitter", "W Jitter", SCRIPT_PARAM_SLICE, 0,1,100,1)
+	Config.human:addParam("ejitter", "E Jitter", SCRIPT_PARAM_SLICE, 0,1,100,1)
+	
 	
 	Config.draws:addParam("drawq", "Draw Q",SCRIPT_PARAM_ONOFF,false)
 	Config.draws:addParam("draww", "Draw W",SCRIPT_PARAM_ONOFF,false)
@@ -219,7 +219,8 @@ function OnLoad()
 	Config.draws:addParam("drawenemy", "Draw Selected Enemy", SCRIPT_PARAM_ONOFF, false)
 	Config.draws:addParam("drawenemyult", "Draw Selected Enemy (Forceult)", SCRIPT_PARAM_ONOFF, false)
 	Config.draws:addParam("drawwalljumpmini", "Draw Walljumps on Minimap", SCRIPT_PARAM_ONOFF, false)
-	Config.draws:addParam("drawwalljumprange", "Draw Walljump in Range", SCRIPT_PARAM_SLICE, 2000, 0, 10000, 10)
+	Config.draws:addParam("drawwalljumprange", "Draw Walljump in Range", SCRIPT_PARAM_SLICE, 3000, 0, 10000, 10)
+	Config.draws:addParam("ulthelper", "Show Killable Champions", SCRIPT_PARAM_ONOFF, true)
 --	Config.draws:addParam("waypoints", "Draw Waypoints", SCRIPT_PARAM_ONOFF, false)
 	
 	Config.keys:addParam("combo", "Combo Key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
@@ -228,6 +229,7 @@ function OnLoad()
 	Config.keys:addParam("lasthit", "Last Hit", SCRIPT_PARAM_ONKEYDOWN, false, 88)
 	Config.keys:addParam("flee", "Flee Key", SCRIPT_PARAM_ONKEYDOWN, false, 71)
 	Config.keys:addParam("forceult", "Forceult", SCRIPT_PARAM_ONKEYDOWN, false, 84)
+	Config.keys:addParam("ulthelper", "Ulthelper Key", SCRIPT_PARAM_ONKEYDOWN, false, 72)
 	Config.keys:addParam("walljump", "Walljump", SCRIPT_PARAM_ONKEYDOWN, false, 85)
 	
 	Config.keys:permaShow("combo")
@@ -237,10 +239,12 @@ function OnLoad()
 	Config.keys:permaShow("flee")
 	Config.keys:permaShow("forceult")
 	Config.keys:permaShow("walljump")
+	Config.adv.r:permaShow("tsl")
 	--Config END
 	
 	flee_recasttime = os.time()
 	waypoints_ctime = os.time()
+	laneclear_recasttime = os.time()
 	enemyMinions = minionManager(MINION_ENEMY, 600, player, MINION_SORT_HEALTH_ASC)
 	Config.active = true
 	p("S1mple_Ziggs loaded")
@@ -252,22 +256,91 @@ Y = 0
 Z = 0
 
 function LongRangeTargetSelector()
+	local tsmode = Config.adv.r.tsl
+	
 	local enemyHeros = GetEnemyHeroes()
 	local preftarget = nil
+	local tsv = 0
 	for key,value in pairs(enemyHeros) do
 		--(X-X1)^2+(Z-Z1)^2 <= R^2 if in range
 		local X1 = value.x
 		local Z1 = value.z
 		local n = math.sqrt((X-X1)^2+(Z-Z1)^2)
-		if preftarget == nil  then
-			if value.visible == true and n <= 5300 and value.dead == false then
-				preftarget = value
+		if n <= 5300 and value.dead == false and value.visible == true then return end
+		--Low HP Mode
+		if Config.adv.r.tsl == "Low HP" then
+			if preftarget == nil then
+				if value.visible == true then
+					preftarget = value
+				end
+			else
+				if preftarget.health > value.health then
+					preftarget = value
+				end
 			end
-		else
-			if preftarget.health > value.health and value.visible == true and n <= 5300 and value.dead == false then
+		end
+		--End Low HP Mode
+		--High HP Mode
+		if Config.adv.r.tsl == "High HP" then
+			if preftarget == nil  then
+				if value.visible == true then
+					preftarget = value
+				end
+			else
+				if preftarget.health < value.health then
+					preftarget = value
+				end
+			end
+		end
+		--End High HP Mode
+		--Begin Max Damage Mode
+		if Config.adv.r.tsl == "Max Damage" then
+			for k2,v2 in pairs(enemyHeros) do
+				local n2 = math.sqrt((X-X1)^2+(Z-Z1)^2)
+				local md = 0
+				if n <= 275	then
+					md = md + 100
+				elseif n <= 550 then
+					md = md + 80
+				end
+			end
+			if tsv < md then
+				preftarget = value
+				tsv = md
+			end
+		end
+		--End Max Damage Mode
+		--Begin Random Mode
+		if Config.adv.r.tsl == "Random" then
+			local md = math.random(1,100)
+			if md > tsv then
+				tsv = md
 				preftarget = value
 			end
 		end
+		--End Random Mode
+		--Begin Low Range Mode
+		if Config.adv.r.tsl == "Low Range" then
+			if preftarget == nil then
+				preftarget = value
+				tsv = n
+			elseif md < tsv then
+				preftarget = value
+				tsv = n
+			end
+		end
+		--End Low Range Mode
+		--Begin High Range Mode
+		if Config.adv.r.tsl == "High Range" then
+			if preftarget == nil then
+				preftarget = value
+				tsv = n
+			elseif md > tsv then
+				preftarget = value
+				tsv = n
+			end
+		end
+		--End High Range Mode
 	end
 	return preftarget
 end
@@ -316,6 +389,8 @@ Z = myHero.z
 	if Config.keys.lasthit == true then return end
 	
 	if Config.keys.laneclear == true then
+		if os.time() < laneclear_recasttime then return end
+		laneclear_recasttime = os.time() + 0.25
 		enemyMinions:update()
 		local prefminion = nil
 		local prefminion_inrange = 0
@@ -363,7 +438,11 @@ Z = myHero.z
 	if Config.keys.flee == true then
 		myHero:MoveTo(mousePos.x, mousePos.z)
 		if Config.adv.e.fleecast then
-			CastE(myHero)
+			if ts.target ~= nil then
+				CastE(ts.target)
+			else
+				CastE(myHero)
+			end
 		end
 		if os.time() < flee_recasttime then return end
 		flee_recasttime = os.time() + Config.human.delayflee
@@ -386,7 +465,7 @@ if Config.active == false then return end
 	if ts.target ~= nil then	
 		DrawText("Normal Target: "..ts.target.charName, 18, 100, 140, c_green)
 	end
-		if LongRangeTargetSelector() ~= nil and myHero:CanUseSpell(SPELL_4) == READY then	
+	if LongRangeTargetSelector() ~= nil and myHero:CanUseSpell(SPELL_4) == READY then	
 		DrawText("Ultimate Target: "..LongRangeTargetSelector().charName, 18, 100, 160, c_green)
 	end
 	
@@ -407,19 +486,13 @@ if Config.active == false then return end
 		DrawCircleMinimap(X,Y,Z,5300,1,c_green)
 	end
 	if Config.draws.drawenemy == true then
-		if ts.target == nil then return end
-			DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,100,5,c_blue)
-			DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,80,5,c_blue)
-			DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,60,5,c_blue)
-			DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,40,5,c_blue)
+		if ts.target ~= nil then
+				DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,100,5,c_blue)
+				DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,80,5,c_blue)
+				DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,60,5,c_blue)
+				DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,40,5,c_blue)
+			end
 	end
-	
-	--DrawText("Current Time: "..os.time(),18,100,50,c_red)
-	--DrawText("Max Mana: "..myHero.maxMana, 18, 100, 60, c_red)
-	--DrawText("Current Mana: "..myHero.mana, 18,100,80,c_red)
-	--DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 100, 100, c_red)
-	--DrawText("Location:"..tostring(math.round(myHero.x)).." : "..tostring(math.round(myHero.y)).." : "..tostring(math.round(myHero.z)),20, 100,160, c_red)
-	--DrawText("Mouse:"..tostring(math.round(mousePos.x)).." : "..tostring(math.round(mousePos.y)).." : "..tostring(math.round(mousePos.z)),20, 100,180, c_red)
 
 	if Config.adv.r.phase1 > Config.adv.r.phase2 then
 		DrawText("Phase 1 is greater then Phase 2", 20, 100,180, c_red)
@@ -432,6 +505,38 @@ if Config.active == false then return end
 	end
 	if Config.keys.walljump == true or Config.draws.drawwalljumpmini == true then
 		MarkJumps()
+	end
+	
+	if Config.adv.debug == true then
+		DrawText("Current Time: "..os.time(),18,100,40,c_red)
+		DrawText("Max Mana: "..myHero.maxMana, 18, 100, 60, c_red)
+		DrawText("Current Mana: "..myHero.mana, 18,100,80,c_red)
+		DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 100, 100, c_red)
+		DrawText("Location: "..tostring(math.round(myHero.x)).." : "..tostring(math.round(myHero.y)).." : "..tostring(math.round(myHero.z)),20, 100,160, c_red)
+		DrawText("Mouse: "..tostring(math.round(mousePos.x)).." : "..tostring(math.round(mousePos.y)).." : "..tostring(math.round(mousePos.z)),20, 100,180, c_red)
+	end
+	
+	if Config.draws.ulthelper == true then
+		local dmg = 0
+		if myHero:CanUseSpell(SPELL_4) == READY then
+			if myHero:GetSpellData(SPELL_4).level == 1 then
+				dmg = 250
+			elseif myHero:GetSpellData(SPELL_4).level == 2 then
+				dmg = 375
+			elseif myHero:GetSpellData(SPELL_4).level == 3 then
+				dmg = 500
+			end
+			dmg = dmg+(myHero.ap*0.9)
+		
+			DrawText("Ult Dmg: "..math.round(dmg),20, 100,200, c_red)
+			if enemyHeros ~= nil then
+				for k,v in pairs(enemyHeros) do
+					if v.health <= dmg then
+						DrawText("Press "..Config.keys.ulthelper.." to kill "..v.charName,50, 500,200, c_red)
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -468,7 +573,7 @@ function CastQ(target)
 	if target == nil then return end
 		local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, Config.adv.q.qcollision)
 		if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsQ.range then
-			CastSpell(_Q,CastPosition.x, CastPosition.z)
+			CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 		end
 end
 
@@ -476,7 +581,7 @@ function CastW(target)
 	if target == nil then return end
 	local CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsW.delay, ZiggsW.width, ZiggsW.range, ZiggsW.speed, myHero, false)
 	if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsW.range then
-		CastSpell(_W,CastPosition.x, CastPosition.z)
+		CastSpell(_W,CastPosition.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), CastPosition.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
 	end
 end
 
@@ -484,7 +589,7 @@ function CastE(target)
 	if target == nil then return end
 	local CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsE.delay, ZiggsE.width, ZiggsE.range, ZiggsE.speed, myHero, false)
 	if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsE.range then
-		CastSpell(_E,CastPosition.x, CastPosition.z)
+		CastSpell(_E,CastPosition.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), CastPosition.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
 	end
 end
 
@@ -498,7 +603,7 @@ function CastR()
 	local randdstx = 0
 	local randdstz = 0
 	
-	local target = LongRangeTargetSelector() -- Next Version Better LRTS
+	local target = LongRangeTargetSelector()
 	
 	if target == nil or target.dead == true or myHero:CanUseSpell(SPELL_4) ~= READY then return end
 	local distance = getDistance(myHero.x, myHero.z, target.x, target.z)
@@ -655,13 +760,21 @@ function MarkJumps()
 end
 
 function Jump()
+	Jump_inrange = false
+	if Config.adv.movewalljump == true and Jump_inrange == false then
+		myHero:MoveTo(mousePos.x, mousePos.z)
+	end
+	
 	for key, value in pairs(jumps) do
 		local n = ((mousePos.x-value[1])^2+(mousePos.z-value[3])^2)
 		n = math.sqrt(math.round(n))
 		if n <= 100 then
-				myHero:MoveTo(value[1],value[3])
+			Jump_inrange = true
+			myHero:MoveTo(value[1],value[3])
+		else
+			Jump_inrange = false
 		end
-		if math.round(myHero.x) == value[1] and math.round(myHero.z) == value[3] then
+		if inRange(math.round(myHero.x), value[1]) == true and inRange(math.round(myHero.z), value[3]) == true then
 			local v5 = value[4]-value[1]
 			local v6 = value[6]-value[3]
 			local cp1 = (value[1]-v5/2)
@@ -674,9 +787,12 @@ function Jump()
 		local n = ((mousePos.x-value[4])^2+(mousePos.z-value[6])^2)
 		n = math.sqrt(math.round(n))
 		if n <= 100 then
-				myHero:MoveTo(value[4],value[6])
+			Jump_inrange = true
+			myHero:MoveTo(value[4],value[6])
+		else
+			Jump_inrange = false
 		end
-		if math.round(myHero.x) == value[4] and math.round(myHero.z) == value[6] then
+		if inRange(math.round(myHero.x), value[4]) == true and inRange(math.round(myHero.z), value[6]) == true then
 			local v7 = value[1]-value[4]
 			local v8 = value[3]-value[6]
 			local cp3 = (value[4]-v7/2)
@@ -686,3 +802,13 @@ function Jump()
 	end
 end
 
+function inRange(cmp1, cmp2, range)
+	if not range then
+		range = 20
+	end
+	if cmp1 >= cmp2-range and cmp1 <= cmp2+range then
+		return true
+	else
+		return false
+	end
+end

@@ -24,3 +24,15 @@ S1mple_Ziggs Version Log:
 	Added Walljump's
 	Some code cleanup & Bug fixes
 	Removed buggy Reset function
+2.0
+	Fixed some jumps
+	Some Bugfixes
+	Added more Force Ult Target Options
+		Give the new "Random" option a try :D
+	Better flee mode
+		Now Cast's Zigg's E on Enemy's
+	Better Walljump
+		Now also jumps if you are near the jump point
+	Added more Humanizer Option's
+
+
