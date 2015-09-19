@@ -10,7 +10,7 @@
 local chkupdates = false --Set to "true" to check for updates without downloading them
 local autoupdate = false --Set to "true" for autoupdate
 local iskeydownfix = true
-local version = "2.0"
+local version = "2.1"
 local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
@@ -257,7 +257,6 @@ Z = 0
 
 function LongRangeTargetSelector()
 	local tsmode = Config.adv.r.tsl
-	
 	local enemyHeros = GetEnemyHeroes()
 	local preftarget = nil
 	local tsv = 0
@@ -266,9 +265,9 @@ function LongRangeTargetSelector()
 		local X1 = value.x
 		local Z1 = value.z
 		local n = math.sqrt((X-X1)^2+(Z-Z1)^2)
-		if n <= 5300 and value.dead == false and value.visible == true then return end
+		if n >= 5300 and value.dead == false and value.visible == true then return end
 		--Low HP Mode
-		if Config.adv.r.tsl == "Low HP" then
+		if Config.adv.r.tsl == 1 then
 			if preftarget == nil then
 				if value.visible == true then
 					preftarget = value
@@ -281,7 +280,7 @@ function LongRangeTargetSelector()
 		end
 		--End Low HP Mode
 		--High HP Mode
-		if Config.adv.r.tsl == "High HP" then
+		if Config.adv.r.tsl == 2 then
 			if preftarget == nil  then
 				if value.visible == true then
 					preftarget = value
@@ -294,7 +293,7 @@ function LongRangeTargetSelector()
 		end
 		--End High HP Mode
 		--Begin Max Damage Mode
-		if Config.adv.r.tsl == "Max Damage" then
+		if Config.adv.r.tsl == 3 then
 			for k2,v2 in pairs(enemyHeros) do
 				local n2 = math.sqrt((X-X1)^2+(Z-Z1)^2)
 				local md = 0
@@ -311,7 +310,7 @@ function LongRangeTargetSelector()
 		end
 		--End Max Damage Mode
 		--Begin Random Mode
-		if Config.adv.r.tsl == "Random" then
+		if Config.adv.r.tsl == 3 then
 			local md = math.random(1,100)
 			if md > tsv then
 				tsv = md
@@ -320,7 +319,7 @@ function LongRangeTargetSelector()
 		end
 		--End Random Mode
 		--Begin Low Range Mode
-		if Config.adv.r.tsl == "Low Range" then
+		if Config.adv.r.tsl == 4 then
 			if preftarget == nil then
 				preftarget = value
 				tsv = n
@@ -331,7 +330,7 @@ function LongRangeTargetSelector()
 		end
 		--End Low Range Mode
 		--Begin High Range Mode
-		if Config.adv.r.tsl == "High Range" then
+		if Config.adv.r.tsl == 5 then
 			if preftarget == nil then
 				preftarget = value
 				tsv = n
@@ -604,7 +603,6 @@ function CastR()
 	local randdstz = 0
 	
 	local target = LongRangeTargetSelector()
-	
 	if target == nil or target.dead == true or myHero:CanUseSpell(SPELL_4) ~= READY then return end
 	local distance = getDistance(myHero.x, myHero.z, target.x, target.z)
 	if not distance then return end
@@ -740,7 +738,7 @@ end
 
 --[[========= Walljumps =========]]--
 --startX,startY,start,Z,endX,endY,endZ
-jumps = {{5948,52,2458,5424,51,2458},{8348,52,3276,8395,51,2798},{6398,50,3460,6775,49,3814},{11780,-71,4554,11973,52,4753},{9338,-71,4490,8969,53,4541},{9722,71,3908,9659,58,3513},{9446,-62,4146,9124,54,3859},{8022,54,4258,7972,51,4738},{3080,57,6014,3319,52,6224},{3924,51,7408,3865,52,7736},{2224,52,8256,2017,50,7936},{2874,51,9156,2516,52,9107},{2916,52,8348,3168,51,8848},{3078,54,10010,3334,-65,10249},{4024,51,8056,4340,49,8154},{9496,58,3146,9404,49,2810},{8942,52,4962,9142,-71,5402},{7822,52,6008,8012,-11,6240},{5724,52,7806,6024,68,8206},{4624,71,10756,4374,49,11250},{5374,-71,10756,5532,57,11136},{5448,71,10326,584,55,10350},{5284,57,11818,5356,58,12092},{6524,56,12006,6564,54,11722},{8522,53,11356,8172,51,11106},{11072,67,9106,11172,52,9706},{11772,50,8856,11588,64,8726},{11722,56,8356,12075,52,8106},{12620,52,6642,12920,52,6942},{12768,52,6124,13160,57,5946},{12306,59,5826,11972,51,5728},{7124,52,6058,7030,56,5546},{7224,55,10206,7074,56,10606},{6824,56,10950,6418,56,11168},{10712,52,7034,10322,52,6958},{11072,52,7208,11048,52,7500},{11122,52,7806,11022,63,8156},{10772,63,8306,10322,60,8406},{9222,53,7058,8872,-71,6608},{7054,53,8744,6874,-70,8626},{7572,53,8956,7822,52,9306}}
+jumps = {{5948,52,2458,5424,51,2458},{8348,52,3276,8395,51,2798},{6398,50,3460,6775,49,3814},{11780,-71,4554,11973,52,4753},{9338,-71,4490,8969,53,4541},{9722,71,3908,9659,58,3513},{9446,-62,4146,9124,54,3859},{8022,54,4258,7972,51,4738},{3080,57,6014,3319,52,6224},{3924,51,7408,3865,52,7736},{2224,52,8256,2017,50,7936},{2874,51,9156,2516,52,9107},{2916,52,8348,3168,51,8848},{3078,54,10010,3334,-65,10249},{4024,51,8056,4340,49,8154},{9496,58,3146,9404,49,2810},{8942,52,4962,9142,-71,5402},{7822,52,6008,8012,-11,6240},{5724,52,7806,6024,68,8206},{4624,71,10756,4374,49,11250},{5374,-71,10756,5532,57,11136},{5448,71,10326,5840,55,10350},{5284,57,11818,5356,58,12092},{6524,56,12006,6564,54,11722},{8522,53,11356,8172,51,11106},{11072,67,9106,11172,52,9706},{11772,50,8856,11588,64,8726},{11722,56,8356,12075,52,8106},{12620,52,6642,12920,52,6942},{12768,52,6124,13160,57,5946},{12306,59,5826,11972,51,5728},{7124,52,6058,7030,56,5546},{7224,55,10206,7074,56,10606},{6824,56,10950,6418,56,11168},{10712,52,7034,10322,52,6958},{11072,52,7208,11048,52,7500},{11122,52,7806,11022,63,8156},{10772,63,8306,10322,60,8406},{9222,53,7058,8872,-71,6608},{7054,53,8744,6874,-70,8626},{7572,53,8956,7822,52,9306}}
 function MarkJumps()
 	for key, value in pairs(jumps) do
 		local n = ((myHero.x-value[1])^2+(myHero.z-value[3])^2)
