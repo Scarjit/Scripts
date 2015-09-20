@@ -10,7 +10,7 @@
 local chkupdates = false --Set to "true" to check for updates without downloading them
 local autoupdate = false --Set to "true" for autoupdate
 local iskeydownfix = true
-local version = "2.1"
+local version = "2.2"
 local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
@@ -41,6 +41,7 @@ require "VPrediction"
 	local currentZN = 0
 	local tlsarray = {"Low HP", "High HP" , "Max Damage", "Random", "Low Range", "High Range"}
 	local rpreds = {"VPrediction", "S1mplePredict", "On Target"}
+	local qpreds = {"VPrediction", "On Target", "S1mplePredict"}
 --END INI VARS
 
 --Keydown Fix
@@ -126,7 +127,6 @@ function ChkUpdate()
 		else
 			p("Update Check failed")
 		end
-	
 end	
 
 function OnLoad()
@@ -155,6 +155,7 @@ function OnLoad()
 	Config.adv.lc:addParam("laneclearpredhealth", "Don't cast spells on Minions below: ", SCRIPT_PARAM_SLICE,5,0,100,1)
 	
 	Config.adv:addSubMenu("Q", "q")	
+	Config.adv.q:addParam("qpres", "Q Prediction", SCRIPT_PARAM_LIST, 3, qpreds)
 	Config.adv.q:addParam("qcollision", "Q Minion Collision", SCRIPT_PARAM_ONOFF, true)
 	Config.adv.q:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
 	Config.adv.q:addParam("combominmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
@@ -221,6 +222,7 @@ function OnLoad()
 	Config.draws:addParam("drawwalljumpmini", "Draw Walljumps on Minimap", SCRIPT_PARAM_ONOFF, false)
 	Config.draws:addParam("drawwalljumprange", "Draw Walljump in Range", SCRIPT_PARAM_SLICE, 3000, 0, 10000, 10)
 	Config.draws:addParam("ulthelper", "Show Killable Champions", SCRIPT_PARAM_ONOFF, true)
+	Config.draws:addParam("drawenemyminion", "Draw selected Minion", SCRIPT_PARAM_ONOFF, false)
 --	Config.draws:addParam("waypoints", "Draw Waypoints", SCRIPT_PARAM_ONOFF, false)
 	
 	Config.keys:addParam("combo", "Combo Key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
@@ -391,7 +393,7 @@ Z = myHero.z
 		if os.time() < laneclear_recasttime then return end
 		laneclear_recasttime = os.time() + 0.25
 		enemyMinions:update()
-		local prefminion = nil
+		prefminion = nil
 		local prefminion_inrange = 0
 		for key,value in pairs(enemyMinions.objects) do
 			if ((value.health/value.maxHealth)*100) <= Config.adv.lc.laneclearpredhealth then return end
@@ -432,6 +434,9 @@ Z = myHero.z
 			b_castlc = true
 			CastE(prefminion)
 		end
+	end
+	if prefminion ~= nil then
+		if prefminion.dead == true then prefminion = nil end
 	end
 	
 	if Config.keys.flee == true then
@@ -492,7 +497,17 @@ if Config.active == false then return end
 				DrawCircle3D(ts.target.x,ts.target.y,ts.target.z,40,5,c_blue)
 			end
 	end
-
+	
+	if Config.draws.drawenemyminion == true then
+		if prefminion ~= nil then
+				DrawText("prefminion: "..prefminion.charName, 20, 100,240, c_red)
+				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,100,5,c_blue)
+				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,80,5,c_blue)
+				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,60,5,c_blue)
+				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,40,5,c_blue)
+			end
+	end
+	
 	if Config.adv.r.phase1 > Config.adv.r.phase2 then
 		DrawText("Phase 1 is greater then Phase 2", 20, 100,180, c_red)
 	end
@@ -570,10 +585,19 @@ end
 
 function CastQ(target)
 	if target == nil then return end
+	if Config.adv.q.qpres == 1 then
 		local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, Config.adv.q.qcollision)
 		if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsQ.range then
 			CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 		end
+	elseif Config.adv.q.qpres == 2 then
+		CastSpell(_Q,target.x+math.random(Config.human.qjitter*-1,Config.human.qjitter),target.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+	elseif Config.adv.q.qpres == 3 then
+		local hx, hz = S1mplePredict(target)
+		if hx and hz then
+			CastSpell(_Q,hx+math.random(Config.human.qjitter*-1,Config.human.qjitter),hz+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+		end
+	end
 end
 
 function CastW(target)

@@ -37,5 +37,6 @@ S1mple_Ziggs Version Log:
 2.1
 	Hotfix for broken forceult
 2.2
-	
-	
+	Fixed Q Prediction (THIS IS ONLY A HOTFIX)
+		Added Chooser for VPrediction, OnTarget, S1mplePredict
+		Better Predictions comming after i slept
