@@ -40,3 +40,11 @@ S1mple_Ziggs Version Log:
 	Fixed Q Prediction (THIS IS ONLY A HOTFIX)
 		Added Chooser for VPrediction, OnTarget, S1mplePredict
 		Better Predictions comming after i slept
+2.3
+	Q Prediction updated (use "Smart Prediction")
+		Still in Development, please report if there are
+		any issures
+	Removed inGame Changelog
+		Viewing Changelog, causes some funny Bug's
+	
+	

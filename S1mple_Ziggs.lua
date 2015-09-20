@@ -10,14 +10,12 @@
 local chkupdates = false --Set to "true" to check for updates without downloading them
 local autoupdate = false --Set to "true" for autoupdate
 local iskeydownfix = true
-local version = "2.2"
+local version = "2.3"
 local lolversion = "5.18"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
-local Changelog_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.changelog?rand="..math.random(1,10000)
 local Update_URL = "https://"..Update_HOST..Update_PATH
-local versions = {"0", "1.5","1.6","1.7","1.8","1.9","2.0","2.1"}
 
 myHero = GetMyHero()
 if myHero.charName ~= 'Ziggs' then return end
@@ -34,14 +32,15 @@ require "VPrediction"
 	local ZiggsE = { range = 900, width = 350, speed = 1750, delay = .12, collision=false }
 	local ZiggsR = { range = 5300, width = 600, speed = 1750, delay = 0.5, collision=false }
 	local VP = VPrediction()
-	local ts = TargetSelector(TARGET_LESS_CAST, 1500, DAMAGE_MAGIC, true)
+	local ts = TargetSelector(TARGET_LESS_CAST, 2000, DAMAGE_MAGIC, true)
 	local Config = scriptConfig("S1mple_Ziggs", "s1mple_ziggs")
 	local currentXN = 0
 	local currentYN = 0
 	local currentZN = 0
 	local tlsarray = {"Low HP", "High HP" , "Max Damage", "Random", "Low Range", "High Range"}
 	local rpreds = {"VPrediction", "S1mplePredict", "On Target"}
-	local qpreds = {"VPrediction", "On Target", "S1mplePredict"}
+	local qpreds = {"VPrediction", "On Target", "S1mplePredict", "Smart Mode"}
+	local qtm = ""
 --END INI VARS
 
 --Keydown Fix
@@ -138,8 +137,6 @@ function OnLoad()
 	Config:addParam("active", "Activated", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("hc", "Accuracy (Default: 2)", SCRIPT_PARAM_SLICE, 2, -1, 5, 1)
 	Config:addParam("version", "Current Version", SCRIPT_PARAM_INFO, version)
-	Config:addParam("otherchangelog", "Choose Changelog", SCRIPT_PARAM_LIST, 0, versions)
-	Config:addParam("dspotherchanglelog", "Display selected Changelog", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("leagueversion", "Build for League of Legends Version: ", SCRIPT_PARAM_INFO, lolversion)
 	
 	Config:addTS(ts)
@@ -242,12 +239,13 @@ function OnLoad()
 	Config.keys:permaShow("forceult")
 	Config.keys:permaShow("walljump")
 	Config.adv.r:permaShow("tsl")
+	Config.adv.q:permaShow("qpres")
 	--Config END
 	
 	flee_recasttime = os.time()
 	waypoints_ctime = os.time()
 	laneclear_recasttime = os.time()
-	enemyMinions = minionManager(MINION_ENEMY, 600, player, MINION_SORT_HEALTH_ASC)
+	enemyMinions = minionManager(MINION_ENEMY, 850, player, MINION_SORT_HEALTH_ASC)
 	Config.active = true
 	p("S1mple_Ziggs loaded")
 	
@@ -348,10 +346,6 @@ end
 
 function OnTick()
 
-if Config.dspotherchanglelog then
-	Config.dspotherchanglelog = false
-	Changelog(Config.otherchangelog)
-end
 
 if SAC~=true and SxOrb~= true and GetGameTimer() <= 100 and myHero.dead and not Config.active then return end
 ts:update()
@@ -528,6 +522,7 @@ if Config.active == false then return end
 		DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 100, 100, c_red)
 		DrawText("Location: "..tostring(math.round(myHero.x)).." : "..tostring(math.round(myHero.y)).." : "..tostring(math.round(myHero.z)),20, 100,160, c_red)
 		DrawText("Mouse: "..tostring(math.round(mousePos.x)).." : "..tostring(math.round(mousePos.y)).." : "..tostring(math.round(mousePos.z)),20, 100,180, c_red)
+		DrawText("Q Target Mode: "..qtm,20,100,200,c_red)
 	end
 	
 	if Config.draws.ulthelper == true then
@@ -584,18 +579,78 @@ function S1mplePredict(target)
 end
 
 function CastQ(target)
+	enemyMinions:update()
 	if target == nil then return end
-	if Config.adv.q.qpres == 1 then
+	if Config.adv.q.qpres == 1 then --VPrediction
+		qtm = "VPrediction"
 		local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, Config.adv.q.qcollision)
 		if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsQ.range then
 			CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 		end
-	elseif Config.adv.q.qpres == 2 then
+		
+	elseif Config.adv.q.qpres == 2 then --On Target
+		qtm = "On Target"
 		CastSpell(_Q,target.x+math.random(Config.human.qjitter*-1,Config.human.qjitter),target.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
-	elseif Config.adv.q.qpres == 3 then
+
+		elseif Config.adv.q.qpres == 3 then --Simple Prediction
+		qtm = "S1mple Prediction"
 		local hx, hz = S1mplePredict(target)
 		if hx and hz then
 			CastSpell(_Q,hx+math.random(Config.human.qjitter*-1,Config.human.qjitter),hz+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+		end
+		
+	elseif Config.adv.q.qpres == 4 then --Smart Prediction
+		qtm = "Smart Prediction"
+		--Low Range Predict
+		if GetDistance(target) <= ZiggsQ.range then --850
+			if GetDistance(target) <= 280 then
+				qtm = "Smart Prediction | On Target Mode"
+				CastSpell(_Q,target.x+math.random(Config.human.qjitter*-1,Config.human.qjitter),target.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+			elseif GetDistance(target) <= 560 then
+				qtm = "Smart Prediction | S1mplePredict"
+				local hx, hz = S1mplePredict(target)
+				if hx and hz then
+					CastSpell(_Q,hx+math.random(Config.human.qjitter*-1,Config.human.qjitter),hz+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+				end
+			else
+				qtm = "Smart Prediction | VPrediction"
+				local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, Config.adv.q.qcollision)
+				if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsQ.range then
+					CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+				end
+			end
+		elseif GetDistance(target) > ZiggsQ.range and target.type ~= "obj_AI_Minion" and GetDistance(target) <= 1400 then
+		qtm = "Smart Prediction | Bounce Mode"
+		--End Low Range Predict
+		--Bounce Predict
+			local firstBounce = Vector(myHero) + ZiggsQ.range * (Vector(target) - Vector(myHero)):normalized()
+			local secondBounce = Vector(myHero) + (ZiggsQ.range + (ZiggsQ.range * 0.447)) * (Vector(target) - Vector(myHero)):normalized()
+			if Config.adv.q.qcollision == true then
+				for i, minion in pairs(enemyMinions.objects) do
+					if GetDistanceSqr(minion, firstBounce) <= 150 * 150 and GetDistanceSqr(target, firstBounce) > 150 * 150 then
+						qtm = "Smart Prediction | Bounce Mode | First Bounce Mode"
+						local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, 1400, ZiggsQ.speed, myHero, false)
+						if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < 1400 then
+							CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+						end
+					end
+					if GetDistanceSqr(minion, secondBounce) <= 150 * 150 and GetDistanceSqr(target, secondBounce) > 150 * 150 then
+						qtm = "Smart Prediction | Bounce Mode | Secound Bounce Mode"
+						local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, 1400, ZiggsQ.speed, myHero, false)
+						if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < 1400 then
+							CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+						end
+					end
+				end
+			else
+			qtm = "Smart Prediction | Bounce Mode | VPrediction"
+				local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, 1400, ZiggsQ.speed, myHero, false)
+				if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < 1400 then
+					CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+				end
+			end
+			
+		--End Bounce Predict
 		end
 	end
 end
@@ -703,48 +758,6 @@ function OnUnload()
 	p("Unloaded")
 end
 
-function Changelog(selectedversion)
-	local b_currentVersion = false
-	local b_chnotfound = true
-	local ServerData = GetWebResult(Update_HOST, Changelog_PATH)
-	local index = -1
-	selectedversion = versions[tonumber(selectedversion)]
-	
-	for key,value in pairs(versions) do
-		if value == selectedversion then 
-			index = key
-		end
-	end
-	if index == -1 then 
-		p("Could not find Version: "..selectedversion) 
-		return 
-	end
-	
-	if ServerData then
-		tabl = lines(ServerData)
-		for i,v in pairs(tabl) do
-			if v == selectedversion then
-				b_currentVersion = true
-				b_chnotfound = false
-				print("<font color=\"#FFD700\">Version: </font>"..v)
-			else
-				if v == versions[index+1] then 
-					b_currentVersion = false
-				end
-				if b_currentVersion then
-					p(v)
-				end
-			end
-		end
-	else
-		p("Could not connect to "..Update_HOST)
-	end
-	if b_chnotfound then
-		if selectedversion ~= "0" then
-			p("Could not find Changelog for Version: </font>"..selectedversion) 
-		end
-	end
-end
 
 --[[========= S1mple Libary =========]]--
 
