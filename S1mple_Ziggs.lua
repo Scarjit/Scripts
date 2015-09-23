@@ -9,9 +9,10 @@
 ]]--
 local chkupdates = false --Set to "true" to check for updates without downloading them
 local autoupdate = false --Set to "true" for autoupdate
+local chknews = true
 local iskeydownfix = true
-local version = "2.3"
-local lolversion = "5.18"
+local version = "2.4"
+local lolversion = "5.18 HF"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
@@ -69,11 +70,13 @@ end
 function findorbwalker() --Thanks to http://forum.botoflegends.com/user/431842-orianna/ for this Simple solution
 	if _G.Reborn_Loaded then
 		SAC=true
+		p("Sida's Auto Carry found")		
 	elseif not _G.Reborn_Loaded and FileExist(LIB_PATH .. "SxOrbWalk.lua") then
 		SxOrb=true
 		require("SxOrbWalk")
 		DelayAction(function() Config:addSubMenu("SxOrbWalk","orbWalk") end,5)
 		DelayAction(function() _G.SxOrb:LoadToMenu(Config.orbWalk) end,5)
+		p("SxOrbWalk found")
 	elseif SAC~=true and SxOrb~= true then
 		p("=================")
 		p("=================")
@@ -83,10 +86,12 @@ function findorbwalker() --Thanks to http://forum.botoflegends.com/user/431842-o
 	end
 end
 
-function Update()
-	if not autoupdate then 
-		p("Autoupdate's disabled")
-	return 
+function Update(arg)
+	if arg ~= "force" then
+		if not autoupdate then 
+			p("Autoupdate's disabled")
+		return 
+		end
 	end
 		p("Updating S1mple_Ziggs")
 		local ServerData = GetWebResult(Update_HOST, "/Scarjit/Scripts/master/S1mple_Ziggs.version")
@@ -98,8 +103,11 @@ function Update()
 					p("Local Version: "..version" <==> ServerVersion: "..ServerVersion)
 					p("Updating, don't press F9")
 					DelayAction(function() DownloadFile(Update_URL, Update_FILE_PATH, function () p("Successfully updated. ("..version.." => "..ServerVersion.."), press F9 twice to load the updated version.") end) end, 3)
-				else
+				elseif  tonumber(version) == ServerVersion then
 					p("No Update found")
+				elseif tonumber(version) > ServerVersion then
+					p("WARNING: There is something wrong, with the Updater")
+					p("or you have manually changed your Version Number")
 				end
 			end
 		else
@@ -128,9 +136,18 @@ function ChkUpdate()
 		end
 end	
 
+function ChkNews()
+	if not chknews then return end
+			local ServerData = GetWebResult(Update_HOST, "/Scarjit/Scripts/master/S1mple_Ziggs.news")
+		if ServerData then
+			Config:addParam("news", ServerData,SCRIPT_PARAM_INFO, "")		
+		else
+			p("News Check failed")
+		end
+end
+
 function OnLoad()
 	p("S1mple_Ziggs Version</font> "..version.." <font color=\"#570BB2\">loading</font>")
-	findorbwalker()
 	ChkUpdate()
 	Update()
 	--Config START
@@ -138,6 +155,7 @@ function OnLoad()
 	Config:addParam("hc", "Accuracy (Default: 2)", SCRIPT_PARAM_SLICE, 2, -1, 5, 1)
 	Config:addParam("version", "Current Version", SCRIPT_PARAM_INFO, version)
 	Config:addParam("leagueversion", "Build for League of Legends Version: ", SCRIPT_PARAM_INFO, lolversion)
+	Config:addParam("forceupdate", "Update now", SCRIPT_PARAM_ONOFF, false)
 	
 	Config:addTS(ts)
 	Config:addSubMenu("Draws", "draws")
@@ -155,28 +173,28 @@ function OnLoad()
 	Config.adv.q:addParam("qpres", "Q Prediction", SCRIPT_PARAM_LIST, 3, qpreds)
 	Config.adv.q:addParam("qcollision", "Q Minion Collision", SCRIPT_PARAM_ONOFF, true)
 	Config.adv.q:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.q:addParam("combominmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.q:addParam("combominmana", "Minimum Mana % (Combo)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.q:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.q:addParam("harrasminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.q:addParam("harrasminmana", "Minimum Mana % (Harras)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.q:addParam("laneclearcast", "Cast in Laneclear Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.q:addParam("laneclearminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.q:addParam("laneclearminmana", "Minimum Mana % (Laneclear)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	
 	Config.adv:addSubMenu("W", "w")
 	Config.adv.w:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.w:addParam("combominmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.w:addParam("combominmana", "Minimum Mana % (Combo)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.w:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.w:addParam("harrasminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.w:addParam("harrasminmana", "Minimum Mana % (Harras)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.w:addParam("laneclearcast", "Cast in Laneclear Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.w:addParam("laneclearminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.w:addParam("laneclearminmana", "Minimum Mana % (Laneclear)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.w:addParam("fleecast", "Cast in Flee Mode", SCRIPT_PARAM_ONOFF, true)
 
 	Config.adv:addSubMenu("E", "e")
 	Config.adv.e:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.e:addParam("combominmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.e:addParam("combominmana", "Minimum Mana % (Combo)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.e:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.e:addParam("harrasminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.e:addParam("harrasminmana", "Minimum Mana (Harras)%", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.e:addParam("laneclearcast", "Cast in Laneclear Mode", SCRIPT_PARAM_ONOFF, true)
-	Config.adv.e:addParam("laneclearminmana", "Minimum Mana %", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
+	Config.adv.e:addParam("laneclearminmana", "Minimum Mana % (Laneclear)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.e:addParam("fleecast", "Cast in Flee Mode", SCRIPT_PARAM_ONOFF, true)
 	
 	Config.adv:addSubMenu("R", "r")
@@ -247,8 +265,11 @@ function OnLoad()
 	laneclear_recasttime = os.time()
 	enemyMinions = minionManager(MINION_ENEMY, 850, player, MINION_SORT_HEALTH_ASC)
 	Config.active = true
+	Config.forceupdate = false
+	findorbwalker()
+	ChkNews()
 	p("S1mple_Ziggs loaded")
-	
+	ontickruns = 0
 end
 
 X = 0
@@ -345,92 +366,104 @@ function LongRangeTargetSelector()
 end
 
 function OnTick()
-
-
 if SAC~=true and SxOrb~= true and GetGameTimer() <= 100 and myHero.dead and not Config.active then return end
+if ontickruns >= math.huge - 1000 then
+	ontickruns = math.huge - 2000
+end
+if Config.forceupdate and ontickruns > 500 then
+	Config.forceupdate = false
+	Update("force")
+end
+
+ontickruns =  ontickruns+1
 ts:update()
 X = myHero.x
 Y = myHero.y
 Z = myHero.z
 
 	if Config.keys.combo == true then
-		if ts.target == nil then return end
-		tname = string.upper(string.sub(ts.target.charName, 0, 3))
-		if tname ~= "SRU" then
-			if Config.adv.q.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.combominmana then
-				CastQ(ts.target)
-			end
-			if Config.adv.w.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.combominmana then
-				CastW(ts.target)
-			end
-			if Config.adv.e.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.combominmana then
-				CastE(ts.target)
+		if ts.target ~= nil then
+			tname = string.upper(string.sub(ts.target.charName, 0, 3))
+			if tname ~= "SRU" then
+				if Config.adv.q.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.combominmana then
+					CastQ(ts.target)
+				end
+				if Config.adv.w.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.combominmana then
+					CastW(ts.target)
+				end
+				if Config.adv.e.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.combominmana then
+					CastE(ts.target)
+				end
 			end
 		end
 	end
 	if Config.keys.harras == true then
-		if ts.target == nil then return end
-		if Config.adv.q.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.harrasminmana then
-			CastQ(ts.target)
-		end
-		if Config.adv.w.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.harrasminmana then
-			CastW(ts.target)
-		end
-		if Config.adv.e.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.harrasminmana then
-			CastE(ts.target)
+		if ts.target ~= nil then
+			if Config.adv.q.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.harrasminmana then
+				CastQ(ts.target)
+			end
+			if Config.adv.w.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.harrasminmana then
+				CastW(ts.target)
+			end
+			if Config.adv.e.harrascast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.harrasminmana then
+				CastE(ts.target)
+			end
 		end
 	end
 	
 	if Config.keys.lasthit == true then return end
 	
 	if Config.keys.laneclear == true then
-		if os.time() < laneclear_recasttime then return end
-		laneclear_recasttime = os.time() + 0.25
-		enemyMinions:update()
-		prefminion = nil
-		local prefminion_inrange = 0
-		for key,value in pairs(enemyMinions.objects) do
-			if ((value.health/value.maxHealth)*100) <= Config.adv.lc.laneclearpredhealth then return end
-			prefminion_inrange_N = 0
-			local X1 = value.x
-			local Z1 = value.z
-			local n = math.sqrt((X-X1)^2+(Z-Z1)^2)
-			if n >= 550 then return end
-				for key2,value2 in pairs(enemyMinions.objects) do
-					local X2 = value2.x
-					local Z2 = value2.z
-					local n2 = math.sqrt((X-X2)^2+(Z-Z2)^2)
-					if n2 >= 225 then 
-						prefminion_inrange_N = prefminion_inrange_N+1
+		if os.time() > laneclear_recasttime then
+			laneclear_recasttime = os.time() + 0.25
+			enemyMinions:update()
+			prefminion = nil
+			local prefminion_inrange = 0
+			for key,value in pairs(enemyMinions.objects) do
+				if  ((value.health/value.maxHealth)*100) >= Config.adv.lc.laneclearpredhealth then
+					prefminion_inrange_N = 0
+					local X1 = value.x
+					local Z1 = value.z
+					local n = math.sqrt((X-X1)^2+(Z-Z1)^2)
+					if  n <= 550 then
+						for key2,value2 in pairs(enemyMinions.objects) do
+							local X2 = value2.x
+							local Z2 = value2.z
+							local n2 = math.sqrt((X-X2)^2+(Z-Z2)^2)
+							if n2 >= 225 then 
+								prefminion_inrange_N = prefminion_inrange_N+1
+							end
+						end
+						if prefminion == nil then
+							prefminion = value
+							prefminion_inrange = prefminion_inrange_N
+						end
+						if prefminion_inrange < prefminion_inrange_N then
+							prefminion = value
+							prefminion_inrange = prefminion_inrange_N
+						end
 					end
 				end
-			if prefminion == nil then
-				prefminion = value
-				prefminion_inrange = prefminion_inrange_N
 			end
-			if prefminion_inrange < prefminion_inrange_N then
-				prefminion = value
-				prefminion_inrange = prefminion_inrange_N
+			local b_castlc = false
+			if prefminion then
+				if myHero:CanUseSpell(SPELL_1) == READY and b_castlc == false and Config.adv.q.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.laneclearminmana then
+					b_castlc = true
+					CastQ(prefminion)
+				end
+				if myHero:CanUseSpell(SPELL_2) == READY and b_castlc == false and Config.adv.w.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.laneclearminmana then
+					b_castlc = true
+					CastW(prefminion)
+				end
+				if myHero:CanUseSpell(SPELL_3) == READY and b_castlc == false and Config.adv.e.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.laneclearminmana then
+					b_castlc = true
+					CastE(prefminion)
+				end
 			end
-			
+			if prefminion ~= nil then
+				if prefminion.dead == true then prefminion = nil end
+			end
 		end
-		local b_castlc = false
-		if not prefminion then return end
-		if myHero:CanUseSpell(SPELL_1) == READY and b_castlc == false and Config.adv.q.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.q.laneclearminmana then
-			b_castlc = true
-			CastQ(prefminion)
-		end
-		if myHero:CanUseSpell(SPELL_2) == READY and b_castlc == false and Config.adv.w.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.w.laneclearminmana then
-			b_castlc = true
-			CastW(prefminion)
-		end
-		if myHero:CanUseSpell(SPELL_3) == READY and b_castlc == false and Config.adv.e.laneclearcast and not prefminion.dead and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.laneclearminmana then
-			b_castlc = true
-			CastE(prefminion)
-		end
-	end
-	if prefminion ~= nil then
-		if prefminion.dead == true then prefminion = nil end
 	end
 	
 	if Config.keys.flee == true then
@@ -442,10 +475,11 @@ Z = myHero.z
 				CastE(myHero)
 			end
 		end
-		if os.time() < flee_recasttime then return end
-		flee_recasttime = os.time() + Config.human.delayflee
-		if Config.adv.w.fleecast then
-			CastW(myHero)
+		if not os.time() < flee_recasttime then
+			flee_recasttime = os.time() + Config.human.delayflee
+			if Config.adv.w.fleecast then
+				CastW(myHero)
+			end
 		end
 	end
 	
@@ -494,7 +528,7 @@ if Config.active == false then return end
 	
 	if Config.draws.drawenemyminion == true then
 		if prefminion ~= nil then
-				DrawText("prefminion: "..prefminion.charName, 20, 100,240, c_red)
+				DrawText("prefminion: "..prefminion.charName, 20, 100,180, c_red)
 				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,100,5,c_blue)
 				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,80,5,c_blue)
 				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,60,5,c_blue)
@@ -503,26 +537,42 @@ if Config.active == false then return end
 	end
 	
 	if Config.adv.r.phase1 > Config.adv.r.phase2 then
-		DrawText("Phase 1 is greater then Phase 2", 20, 100,180, c_red)
+		DrawText("Phase 1 is greater then Phase 2", 20, 100,200, c_red)
 	end
 	if Config.adv.r.phase2 > Config.adv.r.phase3 then
-		DrawText("Phase 2 is greater then Phase 3", 20, 100,200, c_red)
+		DrawText("Phase 2 is greater then Phase 3", 20, 100,220, c_red)
 	end
 	if Config.adv.r.phase1 > Config.adv.r.phase3 then
-		DrawText("Phase 1 is greater then Phase 3", 20, 100,220, c_red)
+		DrawText("Phase 1 is greater then Phase 3", 20, 100,240, c_red)
 	end
 	if Config.keys.walljump == true or Config.draws.drawwalljumpmini == true then
 		MarkJumps()
 	end
 	
 	if Config.adv.debug == true then
-		DrawText("Current Time: "..os.time(),18,100,40,c_red)
-		DrawText("Max Mana: "..myHero.maxMana, 18, 100, 60, c_red)
-		DrawText("Current Mana: "..myHero.mana, 18,100,80,c_red)
-		DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 18, 100, 100, c_red)
-		DrawText("Location: "..tostring(math.round(myHero.x)).." : "..tostring(math.round(myHero.y)).." : "..tostring(math.round(myHero.z)),20, 100,160, c_red)
-		DrawText("Mouse: "..tostring(math.round(mousePos.x)).." : "..tostring(math.round(mousePos.y)).." : "..tostring(math.round(mousePos.z)),20, 100,180, c_red)
-		DrawText("Q Target Mode: "..qtm,20,100,200,c_red)
+		DrawText("Current Time: "..os.time(),20,100,20,c_red)
+		DrawText("Max Mana: "..myHero.maxMana, 20, 100, 40, c_red)
+		DrawText("Current Mana: "..myHero.mana, 20,100,60,c_red)
+		DrawText("Mana Percentage: "..((myHero.mana/myHero.maxMana)*100), 20, 100, 80, c_red)
+		DrawText("Location: "..tostring(math.round(myHero.x)).." : "..tostring(math.round(myHero.y)).." : "..tostring(math.round(myHero.z)),20, 100,100, c_red)
+		DrawText("Mouse: "..tostring(math.round(mousePos.x)).." : "..tostring(math.round(mousePos.y)).." : "..tostring(math.round(mousePos.z)),20, 100,120, c_red)
+		DrawText("Q Target Mode: "..qtm,20,100,260,c_red)
+		DrawText("ontickruns: "..ontickruns,20,100,280,c_red)
+		
+		ts:update()
+		if ts.target ~= nil then
+			local CastPosition, HitChance, Position = VP:GetCircularCastPosition(ts.target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, false)
+			DrawText("Q VPrediction Chance: "..HitChance,20,100,320,c_green)
+			local CastPosition, HitChance, Position = VP:GetCircularCastPosition(ts.target, ZiggsW.delay, ZiggsW.width, ZiggsW.range, ZiggsW.speed, myHero, false)
+			DrawText("W VPrediction Chance: "..HitChance,20,100,340,c_green)
+			local CastPosition, HitChance, Position = VP:GetCircularCastPosition(ts.target, ZiggsE.delay, ZiggsE.width, ZiggsE.range, ZiggsE.speed, myHero, false)
+			DrawText("E VPrediction Chance: "..HitChance,20,100,360,c_green)
+		end
+		if Config.forceupdate == true then
+			DrawText("Config.forceupdate: true",20,100,300,c_red)
+		else
+			DrawText("Config.forceupdate: false",20,100,300,c_red)
+		end
 	end
 	
 	if Config.draws.ulthelper == true then
@@ -537,11 +587,11 @@ if Config.active == false then return end
 			end
 			dmg = dmg+(myHero.ap*0.9)
 		
-			DrawText("Ult Dmg: "..math.round(dmg),20, 100,200, c_red)
+			DrawText("Ult Dmg: "..math.round(dmg),20, 100,320, c_red)
 			if enemyHeros ~= nil then
 				for k,v in pairs(enemyHeros) do
 					if v.health <= dmg then
-						DrawText("Press "..Config.keys.ulthelper.." to kill "..v.charName,50, 500,200, c_red)
+						DrawText("Press "..Config.keys.ulthelper.." to kill "..v.charName,50, 500,30, c_red)
 					end
 				end
 			end
