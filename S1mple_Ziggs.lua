@@ -11,7 +11,7 @@ local chkupdates = false --Set to "true" to check for updates without downloadin
 local autoupdate = false --Set to "true" for autoupdate
 local chknews = true
 local iskeydownfix = true
-local version = "2.4"
+local version = "2.5"
 local lolversion = "5.18 HF"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
@@ -41,7 +41,10 @@ require "VPrediction"
 	local tlsarray = {"Low HP", "High HP" , "Max Damage", "Random", "Low Range", "High Range"}
 	local rpreds = {"VPrediction", "S1mplePredict", "On Target"}
 	local qpreds = {"VPrediction", "On Target", "S1mplePredict", "Smart Mode"}
+	local wpreds = {"VPrediction"}
+	local epreds = {"VPrediction"}
 	local qtm = ""
+	enemyHeros = GetEnemyHeroes()
 --END INI VARS
 
 --Keydown Fix
@@ -83,6 +86,18 @@ function findorbwalker() --Thanks to http://forum.botoflegends.com/user/431842-o
 		p("SxOrb or SAC:R is required.")
 		p("=================")
 		p("=================")
+	end
+end
+
+function findprediction()
+	if FileExist(LIB_PATH.."SPrediction.lua") then
+		require("SPrediction")
+		SPred = SPrediction()
+		p("Found SPrediction")
+		table.insert(qpreds,"SPrediction")
+		table.insert(wpreds,"SPrediction")
+		table.insert(epreds,"SPrediction")
+		table.insert(rpreds,"SPrediction")
 	end
 end
 
@@ -150,6 +165,8 @@ function OnLoad()
 	p("S1mple_Ziggs Version</font> "..version.." <font color=\"#570BB2\">loading</font>")
 	ChkUpdate()
 	Update()
+	findprediction()
+	
 	--Config START
 	Config:addParam("active", "Activated", SCRIPT_PARAM_ONOFF, false)
 	Config:addParam("hc", "Accuracy (Default: 2)", SCRIPT_PARAM_SLICE, 2, -1, 5, 1)
@@ -162,6 +179,16 @@ function OnLoad()
 	Config:addSubMenu("Keys", "keys")
 	Config:addSubMenu("Humanizer", "human")
 	Config:addSubMenu("Advanced", "adv")
+	
+	--[[
+	Config:addSubMenu("Cancel Spells", "cancelspell")
+	for key,value in pairs(enemyHeros) do
+		Config.cancelspell:addParam("qcancel"..value.charName, "Cancel "..value.charName.." Q", SCRIPT_PARAM_ONOFF, false)
+		Config.cancelspell:addParam("wcancel"..value.charName, "Cancel "..value.charName.." W", SCRIPT_PARAM_ONOFF, false)
+		Config.cancelspell:addParam("ecancel"..value.charName, "Cancel "..value.charName.." E", SCRIPT_PARAM_ONOFF, false)
+		Config.cancelspell:addParam("rcancel"..value.charName, "Cancel "..value.charName.." R", SCRIPT_PARAM_ONOFF, false)
+	end
+	]]--
 	
 	Config.adv:addParam("debug", "Enable Debug Options", SCRIPT_PARAM_ONOFF, false)
 	Config.adv:addParam("movewalljump", "Move to Mouse in Walljump Mode", SCRIPT_PARAM_ONOFF, true)
@@ -180,6 +207,7 @@ function OnLoad()
 	Config.adv.q:addParam("laneclearminmana", "Minimum Mana % (Laneclear)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	
 	Config.adv:addSubMenu("W", "w")
+	Config.adv.w:addParam("wpres", "W Prediction", SCRIPT_PARAM_LIST, 1, wpreds)
 	Config.adv.w:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
 	Config.adv.w:addParam("combominmana", "Minimum Mana % (Combo)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.w:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
@@ -189,6 +217,7 @@ function OnLoad()
 	Config.adv.w:addParam("fleecast", "Cast in Flee Mode", SCRIPT_PARAM_ONOFF, true)
 
 	Config.adv:addSubMenu("E", "e")
+	Config.adv.e:addParam("epres", "E Prediction", SCRIPT_PARAM_LIST, 1, epreds)
 	Config.adv.e:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, true)
 	Config.adv.e:addParam("combominmana", "Minimum Mana % (Combo)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.e:addParam("harrascast", "Cast in Harras Mode", SCRIPT_PARAM_ONOFF, true)
@@ -198,6 +227,8 @@ function OnLoad()
 	Config.adv.e:addParam("fleecast", "Cast in Flee Mode", SCRIPT_PARAM_ONOFF, true)
 	
 	Config.adv:addSubMenu("R", "r")
+	Config.adv.r:addParam("combocast", "Cast in Combo Mode", SCRIPT_PARAM_ONOFF, false)
+	Config.adv.r:addParam("combominmana", "Minimum Mana % (Combo)", SCRIPT_PARAM_SLICE, 10, 0, 100, 1)
 	Config.adv.r:addParam("rinfo1", "Use the Sliders below to use different", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo2", "Predictions, based on Target Distance.", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo3", "===========WARNING============", SCRIPT_PARAM_INFO, "")
@@ -213,7 +244,7 @@ function OnLoad()
 	Config.adv.r:addParam("phase3pred", "Phase 3 Prediction: ", SCRIPT_PARAM_LIST, 0, rpreds)
 	Config.adv.r:addParam("rrand", "Additional Random Distance: " , SCRIPT_PARAM_SLICE, 0, 0, 250, 1)
 	Config.adv.r:addParam("tsl", "Target Selection Mode:" , SCRIPT_PARAM_LIST, 0, tlsarray)
-	Config.adv.r:addParam("rinfo8", "If you choose VPrediction, please choose", SCRIPT_PARAM_INFO, "")
+	Config.adv.r:addParam("rinfo8", "If you choose V/S/H/DevinePrediction, please choose", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("rinfo9", "a HitChance below", SCRIPT_PARAM_INFO, "")
 	Config.adv.r:addParam("phase1hs", "Phase 1 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
 	Config.adv.r:addParam("phase2hs", "Phase 2 Hitchance", SCRIPT_PARAM_SLICE, 2, 0, 5,1)
@@ -222,9 +253,9 @@ function OnLoad()
 	Config.human:addParam("delayflee", "Delay Double W in Fleemode", SCRIPT_PARAM_SLICE, 0, 0, 4, 1)
 	Config.human:addParam("hinfo1", "Use the Sliders below to add a", SCRIPT_PARAM_INFO, "")
 	Config.human:addParam("hinfo2", "random Position Variance", SCRIPT_PARAM_INFO, "")
-	Config.human:addParam("qjitter", "Q Jitter", SCRIPT_PARAM_SLICE, 0,1,100,1)
-	Config.human:addParam("wjitter", "W Jitter", SCRIPT_PARAM_SLICE, 0,1,100,1)
-	Config.human:addParam("ejitter", "E Jitter", SCRIPT_PARAM_SLICE, 0,1,100,1)
+	Config.human:addParam("qjitter", "Q Jitter", SCRIPT_PARAM_SLICE, 0,0,100,1)
+	Config.human:addParam("wjitter", "W Jitter", SCRIPT_PARAM_SLICE, 0,0,100,1)
+	Config.human:addParam("ejitter", "E Jitter", SCRIPT_PARAM_SLICE, 0,0,100,1)
 	
 	
 	Config.draws:addParam("drawq", "Draw Q",SCRIPT_PARAM_ONOFF,false)
@@ -271,14 +302,26 @@ function OnLoad()
 	p("S1mple_Ziggs loaded")
 	ontickruns = 0
 end
-
+--[[
+function OnProcessSpell(unit, spell)
+	if unit.team ~= myHero.team then
+		--p(unit.charName.." : "..spell.name)
+		if not unit.charName then return end
+		if spell.name == unit.charName.."Q" then
+			p("Found Valid Spell")
+			if Config.cancelspell.qcancel..unit.charName == true then
+				CastSpell(_W,unit.x+math.random(Config.human.qjitter*-1,Config.human.qjitter),unit,z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+			end
+		end
+	end
+end
+]]--
 X = 0
 Y = 0
 Z = 0
 
 function LongRangeTargetSelector()
 	local tsmode = Config.adv.r.tsl
-	local enemyHeros = GetEnemyHeroes()
 	local preftarget = nil
 	local tsv = 0
 	for key,value in pairs(enemyHeros) do
@@ -315,18 +358,19 @@ function LongRangeTargetSelector()
 		--End High HP Mode
 		--Begin Max Damage Mode
 		if Config.adv.r.tsl == 3 then
+			local md = 0
 			for k2,v2 in pairs(enemyHeros) do
+				md = 0
 				local n2 = math.sqrt((X-X1)^2+(Z-Z1)^2)
-				local md = 0
 				if n <= 275	then
 					md = md + 100
 				elseif n <= 550 then
 					md = md + 80
 				end
-			end
-			if tsv < md then
-				preftarget = value
-				tsv = md
+				if tsv < md then
+					preftarget = value
+					tsv = md
+				end
 			end
 		end
 		--End Max Damage Mode
@@ -393,6 +437,9 @@ Z = myHero.z
 				end
 				if Config.adv.e.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.e.combominmana then
 					CastE(ts.target)
+				end
+				if Config.adv.r.combocast and ((myHero.mana/myHero.maxMana)*100) >= Config.adv.r.combominmana then
+					CastR(ts.target)
 				end
 			end
 		end
@@ -527,13 +574,13 @@ if Config.active == false then return end
 	end
 	
 	if Config.draws.drawenemyminion == true then
-		if prefminion ~= nil then
+		if prefminion ~= nil and prefminion.dead == false and prefminion.health > 1 and prefminion.charName ~= nil then
 				DrawText("prefminion: "..prefminion.charName, 20, 100,180, c_red)
 				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,100,5,c_blue)
 				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,80,5,c_blue)
 				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,60,5,c_blue)
 				DrawCircle3D(prefminion.x,prefminion.y,prefminion.z,40,5,c_blue)
-			end
+		end
 	end
 	
 	if Config.adv.r.phase1 > Config.adv.r.phase2 then
@@ -562,11 +609,21 @@ if Config.active == false then return end
 		ts:update()
 		if ts.target ~= nil then
 			local CastPosition, HitChance, Position = VP:GetCircularCastPosition(ts.target, ZiggsQ.delay, ZiggsQ.width, ZiggsQ.range, ZiggsQ.speed, myHero, false)
-			DrawText("Q VPrediction Chance: "..HitChance,20,100,320,c_green)
+			DrawText("Q VPrediction Chance: "..HitChance,20,100,340,c_green)
 			local CastPosition, HitChance, Position = VP:GetCircularCastPosition(ts.target, ZiggsW.delay, ZiggsW.width, ZiggsW.range, ZiggsW.speed, myHero, false)
-			DrawText("W VPrediction Chance: "..HitChance,20,100,340,c_green)
+			DrawText("W VPrediction Chance: "..HitChance,20,100,360,c_green)
 			local CastPosition, HitChance, Position = VP:GetCircularCastPosition(ts.target, ZiggsE.delay, ZiggsE.width, ZiggsE.range, ZiggsE.speed, myHero, false)
-			DrawText("E VPrediction Chance: "..HitChance,20,100,360,c_green)
+			DrawText("E VPrediction Chance: "..HitChance,20,100,380,c_green)
+			
+			if SPred then
+				local CastPosition, Chance, PredPos = SPred:Predict(ts.target, ZiggsQ.range, ZiggsQ.speed, ZiggsQ.delay, ZiggsQ.width, false, myHero)
+				DrawText("Q SPrediction Chance: "..Chance,20,100,400,c_green)
+				local CastPosition, Chance, PredPos = SPred:Predict(ts.target, ZiggsW.range, ZiggsW.speed, ZiggsW.delay, ZiggsW.width, false, myHero)
+				DrawText("W SPrediction Chance: "..Chance,20,100,420,c_green)
+				local CastPosition, Chance, PredPos = SPred:Predict(ts.target, ZiggsE.range, ZiggsE.speed, ZiggsE.delay, ZiggsE.width, false, myHero)
+				DrawText("E SPrediction Chance: "..Chance,20,100,440,c_green)
+			end
+			
 		end
 		if Config.forceupdate == true then
 			DrawText("Config.forceupdate: true",20,100,300,c_red)
@@ -591,7 +648,7 @@ if Config.active == false then return end
 			if enemyHeros ~= nil then
 				for k,v in pairs(enemyHeros) do
 					if v.health <= dmg then
-						DrawText("Press "..Config.keys.ulthelper.." to kill "..v.charName,50, 500,30, c_red)
+						DrawText("Press your Ulthelper Key to kill: "..v.charName,50, 500,30, c_red)
 					end
 				end
 			end
@@ -637,7 +694,7 @@ function CastQ(target)
 		if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsQ.range then
 			CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 		end
-		
+	
 	elseif Config.adv.q.qpres == 2 then --On Target
 		qtm = "On Target"
 		CastSpell(_Q,target.x+math.random(Config.human.qjitter*-1,Config.human.qjitter),target.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
@@ -669,23 +726,23 @@ function CastQ(target)
 					CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 				end
 			end
-		elseif GetDistance(target) > ZiggsQ.range and target.type ~= "obj_AI_Minion" and GetDistance(target) <= 1400 then
-		qtm = "Smart Prediction | Bounce Mode"
 		--End Low Range Predict
 		--Bounce Predict
+		elseif GetDistance(target) > ZiggsQ.range and target.type ~= "obj_AI_Minion" and GetDistance(target) <= 1400 then
+		qtm = "Smart Prediction | Bounce Mode"
 			local firstBounce = Vector(myHero) + ZiggsQ.range * (Vector(target) - Vector(myHero)):normalized()
 			local secondBounce = Vector(myHero) + (ZiggsQ.range + (ZiggsQ.range * 0.447)) * (Vector(target) - Vector(myHero)):normalized()
 			if Config.adv.q.qcollision == true then
 				for i, minion in pairs(enemyMinions.objects) do
 					if GetDistanceSqr(minion, firstBounce) <= 150 * 150 and GetDistanceSqr(target, firstBounce) > 150 * 150 then
-						qtm = "Smart Prediction | Bounce Mode | First Bounce Mode"
+						qtm = "Smart Prediction | Bounce Mode | First Bounce Mode | VPrediction"
 						local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, 1400, ZiggsQ.speed, myHero, false)
 						if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < 1400 then
 							CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 						end
 					end
 					if GetDistanceSqr(minion, secondBounce) <= 150 * 150 and GetDistanceSqr(target, secondBounce) > 150 * 150 then
-						qtm = "Smart Prediction | Bounce Mode | Secound Bounce Mode"
+						qtm = "Smart Prediction | Bounce Mode | Secound Bounce Mode | VPrediction"
 						local CastPosition, HitChance, Position = VP:GetLineCastPosition(target, ZiggsQ.delay, ZiggsQ.width, 1400, ZiggsQ.speed, myHero, false)
 						if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < 1400 then
 							CastSpell(_Q,CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
@@ -702,22 +759,42 @@ function CastQ(target)
 			
 		--End Bounce Predict
 		end
+	elseif qpreds[Config.adv.q.qpres] == "SPrediction" then
+		qtm = "SPrediction"
+		CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsQ.range, ZiggsQ.speed, ZiggsQ.delay, ZiggsQ.width, Config.adv.q.qcollision, myHero)
+		if Chance >= 2 then
+			CastSpell(_Q, CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+		end
 	end
 end
 
 function CastW(target)
 	if target == nil then return end
-	local CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsW.delay, ZiggsW.width, ZiggsW.range, ZiggsW.speed, myHero, false)
-	if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsW.range then
-		CastSpell(_W,CastPosition.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), CastPosition.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
+	if wpreds[Config.adv.w.wpres] == "VPrediction" then
+		local CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsW.delay, ZiggsW.width, ZiggsW.range, ZiggsW.speed, myHero, false)
+		if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsW.range then
+			CastSpell(_W,CastPosition.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), CastPosition.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
+		end
+	elseif wpreds[Config.adv.w.wpres] == "SPrediction" then
+		CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsW.range, ZiggsW.speed, ZiggsW.delay, ZiggsW.width, false, myHero)
+		if Chance >= 2 and GetDistance(CastPosition) < ZiggsW.range then
+			CastSpell(_W, CastPosition.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), CastPosition.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
+		end
 	end
 end
 
 function CastE(target)
 	if target == nil then return end
-	local CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsE.delay, ZiggsE.width, ZiggsE.range, ZiggsE.speed, myHero, false)
-	if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsE.range then
-		CastSpell(_E,CastPosition.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), CastPosition.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
+	if epreds[Config.adv.e.epres] == "VPrediction" then
+		local CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsE.delay, ZiggsE.width, ZiggsE.range, ZiggsE.speed, myHero, false)
+		if CastPosition and HitChance >= 2 and GetDistance(CastPosition) < ZiggsE.range then
+			CastSpell(_E,CastPosition.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), CastPosition.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
+		end
+	elseif epreds[Config.adv.e.epres] == "SPrediction" then
+		CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsE.range, ZiggsE.speed, ZiggsE.delay, ZiggsE.width, false, myHero)
+		if Chance >= 2 and GetDistance(CastPosition) < ZiggsE.range then
+			CastSpell(_E, CastPosition.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), CastPosition.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
+		end
 	end
 end
 
@@ -749,6 +826,12 @@ function CastR()
 				CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
 			end
 		end
+		if rpreds[Config.adv.r.phase1pred] == "SPrediction" then
+			CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsR.range, ZiggsR.speed, ZiggsR.delay, ZiggsR.width, false, myHero)
+			if Chance >= Config.adv.r.phase1hs and GetDistance(CastPosition) < 5850 then
+				CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+			end
+		end
 		if rpreds[Config.adv.r.phase1pred] == "S1mplePredict" then
 			preX, preZ = S1mplePredict(target)
 			if preX and preZ then
@@ -765,6 +848,12 @@ function CastR()
 			if rpreds[Config.adv.r.phase2pred] == "VPrediction" then
 				local  CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsR.delay, ZiggsR.width, ZiggsR.range, ZiggsR.speed, myHero, false)
 				if CastPosition and HitChance >= Config.adv.r.phase2hs and GetDistance(CastPosition) <= 5850 then
+					CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+				end
+			end
+			if rpreds[Config.adv.r.phase2pred] == "SPrediction" then
+				CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsR.range, ZiggsR.speed, ZiggsR.delay, ZiggsR.width, false, myHero)
+				if Chance >= Config.adv.r.phase2hs and GetDistance(CastPosition) < 5850 then
 					CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
 				end
 			end
@@ -785,6 +874,12 @@ function CastR()
 				if rpreds[Config.adv.r.phase3pred] == "VPrediction" then
 					local  CastPosition, HitChance, Position = VP:GetCircularCastPosition(target, ZiggsR.delay, ZiggsR.width, ZiggsR.range, ZiggsR.speed, myHero, false)
 					if CastPosition and HitChance >= Config.adv.r.phase3hs and GetDistance(CastPosition) <= 5850 then
+						CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+					end
+				end
+				if rpreds[Config.adv.r.phase3pred] == "SPrediction" then
+					CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsR.range, ZiggsR.speed, ZiggsR.delay, ZiggsR.width, false, myHero)
+					if Chance >= Config.adv.r.phase3hs and GetDistance(CastPosition) < 5850 then
 						CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
 					end
 				end
