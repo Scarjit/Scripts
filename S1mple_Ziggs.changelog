@@ -54,6 +54,8 @@ S1mple_Ziggs Version Log:
 	Option added to automaticlly cast R in Combo Mode
 		Default: Off
 2.6
-	
-
-	
+	Cancel enemy Spells
+		Uses Zigg's W (Satchel Charge)
+		Can be turned on, for each enemy Spell
+		Default: Off
+2.7

@@ -11,7 +11,7 @@ local chkupdates = false --Set to "true" to check for updates without downloadin
 local autoupdate = false --Set to "true" for autoupdate
 local chknews = true
 local iskeydownfix = true
-local version = "2.5"
+local version = "2.6"
 local lolversion = "5.18 HF"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
@@ -22,7 +22,7 @@ myHero = GetMyHero()
 if myHero.charName ~= 'Ziggs' then return end
 	
 require "VPrediction"
-	
+
 --BEGINN INI VARS
 	local ts = nil
 	local c_red = ARGB(255, 255,0,0)
@@ -180,7 +180,6 @@ function OnLoad()
 	Config:addSubMenu("Humanizer", "human")
 	Config:addSubMenu("Advanced", "adv")
 	
-	--[[
 	Config:addSubMenu("Cancel Spells", "cancelspell")
 	for key,value in pairs(enemyHeros) do
 		Config.cancelspell:addParam("qcancel"..value.charName, "Cancel "..value.charName.." Q", SCRIPT_PARAM_ONOFF, false)
@@ -188,7 +187,7 @@ function OnLoad()
 		Config.cancelspell:addParam("ecancel"..value.charName, "Cancel "..value.charName.." E", SCRIPT_PARAM_ONOFF, false)
 		Config.cancelspell:addParam("rcancel"..value.charName, "Cancel "..value.charName.." R", SCRIPT_PARAM_ONOFF, false)
 	end
-	]]--
+	
 	
 	Config.adv:addParam("debug", "Enable Debug Options", SCRIPT_PARAM_ONOFF, false)
 	Config.adv:addParam("movewalljump", "Move to Mouse in Walljump Mode", SCRIPT_PARAM_ONOFF, true)
@@ -302,20 +301,21 @@ function OnLoad()
 	p("S1mple_Ziggs loaded")
 	ontickruns = 0
 end
---[[
+
 function OnProcessSpell(unit, spell)
 	if unit.team ~= myHero.team then
-		--p(unit.charName.." : "..spell.name)
-		if not unit.charName then return end
-		if spell.name == unit.charName.."Q" then
-			p("Found Valid Spell")
-			if Config.cancelspell.qcancel..unit.charName == true then
-				CastSpell(_W,unit.x+math.random(Config.human.qjitter*-1,Config.human.qjitter),unit,z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+		if unit.charName and unit.dead == false then
+			if myHero:CanUseSpell(_W) == READY and GetDistance(myHero,unit) <= ZiggsW.range then
+				if Config.cancelspell["qcancel"..unit.charName] == true or Config.cancelspell["wcancel"..unit.charName] == true or Config.cancelspell["ecancel"..unit.charName] == true or Config.cancelspell["rcancel"..unit.charName] == true then
+					p("Interrupting: "..spell.name.." by "..unit.charName)
+					CastSpell(_W,unit.x+math.random(Config.human.qjitter*-1,Config.human.qjitter),unit.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+					DelayAction(function() CastSpell(_W) end,0.5)
+				end
 			end
 		end
 	end
 end
-]]--
+
 X = 0
 Y = 0
 Z = 0
@@ -522,7 +522,7 @@ Z = myHero.z
 				CastE(myHero)
 			end
 		end
-		if not os.time() < flee_recasttime then
+		if os.time() > flee_recasttime then
 			flee_recasttime = os.time() + Config.human.delayflee
 			if Config.adv.w.fleecast then
 				CastW(myHero)
@@ -647,7 +647,7 @@ if Config.active == false then return end
 			DrawText("Ult Dmg: "..math.round(dmg),20, 100,320, c_red)
 			if enemyHeros ~= nil then
 				for k,v in pairs(enemyHeros) do
-					if v.health <= dmg then
+					if v.health <= dmg and v.dead == false and GetDistance(myHero,v) <= ZiggsR.range then
 						DrawText("Press your Ulthelper Key to kill: "..v.charName,50, 500,30, c_red)
 					end
 				end
@@ -981,7 +981,6 @@ function Jump()
 		end
 	end
 end
-
 function inRange(cmp1, cmp2, range)
 	if not range then
 		range = 20
