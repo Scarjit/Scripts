@@ -5,13 +5,14 @@
 	Orianna for helping me out with the Orbwalker Detection
 	PvPSuite for the Keydown Fix
 	KuroXNeko for the Banner on my Thread
+	giannis koulis_418212 for reporting a Bug i had, wich was in the end a not implemented function ^^ (Failed to put the Function into OnTick())
 	
 ]]--
 local chkupdates = false --Set to "true" to check for updates without downloading them
 local autoupdate = false --Set to "true" for autoupdate
 local chknews = true
 local iskeydownfix = true
-local version = "2.7"
+local version = "2.8"
 local lolversion = "5.18 HF"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
@@ -48,6 +49,7 @@ require "VPrediction"
 	local wpreds = {"VPrediction"}
 	local epreds = {"VPrediction"}
 	local qtm = ""
+	local ulthelpertarget = nil
 	enemyHeros = GetEnemyHeroes()
 --END INI VARS
 
@@ -71,7 +73,7 @@ end
 --End Keydown Fix
 
 function p(arg)
-	print("<font color=\"#570BB2\">"..arg.."</font>")
+	print("[S1mple_Ziggs] <font color=\"#570BB2\">"..arg.."</font>")
 end	
 
 function findorbwalker() --Thanks to http://forum.botoflegends.com/user/431842-orianna/ for this Simple solution
@@ -552,6 +554,28 @@ Z = myHero.z
 	if Config.keys.walljump == true then
 		Jump()
 	end
+	
+	if Config.keys.ulthelper == true then
+		local dmg = 0
+		if myHero:CanUseSpell(SPELL_4) == READY then
+			if myHero:GetSpellData(SPELL_4).level == 1 then
+				dmg = 250
+			elseif myHero:GetSpellData(SPELL_4).level == 2 then
+				dmg = 375
+			elseif myHero:GetSpellData(SPELL_4).level == 3 then
+				dmg = 500
+			end
+			dmg = dmg+(myHero.ap*0.9)
+			if enemyHeros ~= nil then
+				for k,v in pairs(enemyHeros) do
+					if v.health <= dmg and v.dead == false and GetDistance(myHero,v) <= ZiggsR.range and v.visible == true then
+						CastR(v)
+						p("Casted Ultimate on: "..v.charName)
+					end
+				end
+			end
+		end
+	end
 end
 
 function OnDraw()
@@ -640,6 +664,17 @@ if Config.active == false then return end
 				DrawText("E SPrediction Chance: "..Chance,20,100,440,c_green)
 			end
 			
+			if HPred then
+				local QPos, QHitChance = HPred:GetPredict(HpredQ, ts.target, myHero)
+				DrawText("Q HPrediction Chance: "..QHitChance,20,100,460,c_green)
+				local WPos, WHitChance = HPred:GetPredict(HpredW, ts.target, myHero)
+				DrawText("W HPrediction Chance: "..WHitChance,20,100,480,c_green)
+				local EPos, EHitChance = HPred:GetPredict(HpredE, ts.target, myHero)
+				DrawText("E HPrediction Chance: "..EHitChance,20,100,500,c_green)
+				local RPos, RHitChance = HPred:GetPredict(HpredR, ts.target, myHero)
+				DrawText("R HPrediction Chance: "..RHitChance,20,100,520,c_green)
+			end
+			
 		end
 		if Config.forceupdate == true then
 			DrawText("Config.forceupdate: true",20,100,300,c_red)
@@ -663,7 +698,7 @@ if Config.active == false then return end
 			DrawText("Ult Dmg: "..math.round(dmg),20, 100,320, c_red)
 			if enemyHeros ~= nil then
 				for k,v in pairs(enemyHeros) do
-					if v.health <= dmg and v.dead == false and GetDistance(myHero,v) <= ZiggsR.range then
+					if v.health <= dmg and v.dead == false and GetDistance(myHero,v) <= ZiggsR.range and v.visible == true then
 						DrawText("Press your Ulthelper Key to kill: "..v.charName,50, 500,30, c_red)
 					end
 				end
@@ -783,7 +818,7 @@ function CastQ(target)
 		end
 	elseif qpreds[Config.adv.q.qpreds] == "HPrediction" then
 		qtm = "HPrediction"
-		local QPos, QHitChance = HPred:GetPredict(HP_Q, target, myHero)
+		local QPos, QHitChance = HPred:GetPredict(HpredQ, target, myHero)
 		if QHitChance >= 2 then
 			CastSpell(_Q, QPos.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), QPos.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 		end
@@ -803,7 +838,7 @@ function CastW(target)
 			CastSpell(_W, CastPosition.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), CastPosition.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
 		end
 	elseif qpreds[Config.adv.w.wpreds] == "HPrediction" then
-		local WPos, WHitChance = HPred:GetPredict(HP_W, target, myHero)
+		local WPos, WHitChance = HPred:GetPredict(HpredW, target, myHero)
 		if WHitChance >= 2 then
 			CastSpell(_W, WPos.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), WPos.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
 		end
@@ -823,14 +858,14 @@ function CastE(target)
 			CastSpell(_E, CastPosition.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), CastPosition.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
 		end
 	elseif epreds[Config.adv.e.epreds] == "HPrediction" then
-		local EPos, EHitChance = HPred:GetPredict(HP_E, target, myHero)
+		local EPos, EHitChance = HPred:GetPredict(HpredE, target, myHero)
 		if EHitChance >= 2 then
 			CastSpell(_E, EPos.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), EPos.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
 		end
 	end
 end
 
-function CastR()
+function CastR(arg)
 	--[[
 		Phase 1 <= 600
 		Phase 2 601 - 2000
@@ -839,8 +874,15 @@ function CastR()
 	]]--
 	local randdstx = 0
 	local randdstz = 0
+	if not arg then
+		local target = LongRangeTargetSelector()
+		
+	end
+	if arg then
+		p(arg.charName)
+		target = arg
+	end
 	
-	local target = LongRangeTargetSelector()
 	if target == nil or target.dead == true or myHero:CanUseSpell(SPELL_4) ~= READY then return end
 	local distance = getDistance(myHero.x, myHero.z, target.x, target.z)
 	if not distance then return end
@@ -865,7 +907,7 @@ function CastR()
 			end
 		end
 		if rpreds[Config.adv.r.rpreds] == "HPrediction" then
-			local RPos, RHitChance = HPred:GetPredict(HP_R, target, myHero)
+			local RPos, RHitChance = HPred:GetPredict(HpredR, target, myHero)
 			if RHitChance >= Config.adv.r.phase2hs then
 				CastSpell(_R, RPos.x+math.random(Config.human.rjitter*-1,Config.human.rjitter), RPos.z+math.random(Config.human.rjitter*-1,Config.human.rjitter))
 			end
@@ -896,7 +938,7 @@ function CastR()
 				end
 			end
 			if rpreds[Config.adv.r.rpreds] == "HPrediction" then
-				local RPos, RHitChance = HPred:GetPredict(HP_R, target, myHero)
+				local RPos, RHitChance = HPred:GetPredict(HpredR, target, myHero)
 				if RHitChance >= Config.adv.r.phase2hs then
 					CastSpell(_R, RPos.x+math.random(Config.human.rjitter*-1,Config.human.rjitter), RPos.z+math.random(Config.human.rjitter*-1,Config.human.rjitter))
 				end
@@ -928,7 +970,7 @@ function CastR()
 					end
 				end
 				if rpreds[Config.adv.r.rpreds] == "HPrediction" then
-					local RPos, RHitChance = HPred:GetPredict(HP_R, target, myHero)
+					local RPos, RHitChance = HPred:GetPredict(HpredR, target, myHero)
 					if RHitChance >= Config.adv.r.phase2hs then
 						CastSpell(_R, RPos.x+math.random(Config.human.rjitter*-1,Config.human.rjitter), RPos.z+math.random(Config.human.rjitter*-1,Config.human.rjitter))
 					end
