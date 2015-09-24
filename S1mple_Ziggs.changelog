@@ -59,3 +59,6 @@ S1mple_Ziggs Version Log:
 		Can be turned on, for each enemy Spell
 		Default: Off
 2.7
+	Added HPrediction
+	Will now learn how to convert my
+	Script to Clouddrop

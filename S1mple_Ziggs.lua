@@ -11,7 +11,7 @@ local chkupdates = false --Set to "true" to check for updates without downloadin
 local autoupdate = false --Set to "true" for autoupdate
 local chknews = true
 local iskeydownfix = true
-local version = "2.6"
+local version = "2.7"
 local lolversion = "5.18 HF"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
@@ -32,6 +32,10 @@ require "VPrediction"
 	local ZiggsW = { range = 1000, width = 225, speed = math.huge, delay = .25, collision=false }
 	local ZiggsE = { range = 900, width = 350, speed = 1750, delay = .12, collision=false }
 	local ZiggsR = { range = 5300, width = 600, speed = 1750, delay = 0.5, collision=false }
+	local HpredQ
+	local HpredW
+	local HpredE
+	local HpredR
 	local VP = VPrediction()
 	local ts = TargetSelector(TARGET_LESS_CAST, 2000, DAMAGE_MAGIC, true)
 	local Config = scriptConfig("S1mple_Ziggs", "s1mple_ziggs")
@@ -98,6 +102,19 @@ function findprediction()
 		table.insert(wpreds,"SPrediction")
 		table.insert(epreds,"SPrediction")
 		table.insert(rpreds,"SPrediction")
+	end
+	if FileExist(LIB_PATH.."HPrediction.lua") then
+		require("HPrediction")
+		HPred = HPrediction()
+		p("Found HPrediction")
+		table.insert(qpreds,"HPrediction")
+		table.insert(wpreds,"HPrediction")
+		table.insert(epreds,"HPrediction")
+		table.insert(rpreds,"HPrediction")
+		HpredQ = HPSkillshot({type = "DelayCircle", delay = ZiggsQ.delay, range = ZiggsQ.range, radius = ZiggsQ.width, speed = ZiggsQ.speed})
+		HpredW = HPSkillshot({type = "DelayCircle", delay = ZiggsW.delay, range = ZiggsW.range, radius = ZiggsW.width, speed = ZiggsW.speed})
+		HpredE = HPSkillshot({type = "DelayCircle", delay = ZiggsE.delay, range = ZiggsE.range, radius = ZiggsE.width, speed = ZiggsE.speed})
+		HpredR = HPSkillshot({type = "DelayCircle", delay = ZiggsR.delay, range = ZiggsR.range, radius = ZiggsR.width, speed = ZiggsR.speed})
 	end
 end
 
@@ -268,7 +285,6 @@ function OnLoad()
 	Config.draws:addParam("drawwalljumprange", "Draw Walljump in Range", SCRIPT_PARAM_SLICE, 3000, 0, 10000, 10)
 	Config.draws:addParam("ulthelper", "Show Killable Champions", SCRIPT_PARAM_ONOFF, true)
 	Config.draws:addParam("drawenemyminion", "Draw selected Minion", SCRIPT_PARAM_ONOFF, false)
---	Config.draws:addParam("waypoints", "Draw Waypoints", SCRIPT_PARAM_ONOFF, false)
 	
 	Config.keys:addParam("combo", "Combo Key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 	Config.keys:addParam("harras", "Harras Key", SCRIPT_PARAM_ONKEYDOWN, false, 67)
@@ -765,6 +781,12 @@ function CastQ(target)
 		if Chance >= 2 then
 			CastSpell(_Q, CastPosition.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), CastPosition.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
 		end
+	elseif qpreds[Config.adv.q.qpreds] == "HPrediction" then
+		qtm = "HPrediction"
+		local QPos, QHitChance = HPred:GetPredict(HP_Q, target, myHero)
+		if QHitChance >= 2 then
+			CastSpell(_Q, QPos.x+math.random(Config.human.qjitter*-1,Config.human.qjitter), QPos.z+math.random(Config.human.qjitter*-1,Config.human.qjitter))
+		end
 	end
 end
 
@@ -780,6 +802,11 @@ function CastW(target)
 		if Chance >= 2 and GetDistance(CastPosition) < ZiggsW.range then
 			CastSpell(_W, CastPosition.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), CastPosition.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
 		end
+	elseif qpreds[Config.adv.w.wpreds] == "HPrediction" then
+		local WPos, WHitChance = HPred:GetPredict(HP_W, target, myHero)
+		if WHitChance >= 2 then
+			CastSpell(_W, WPos.x+math.random(Config.human.wjitter*-1,Config.human.wjitter), WPos.z+math.random(Config.human.wjitter*-1,Config.human.wjitter))
+		end
 	end
 end
 
@@ -794,6 +821,11 @@ function CastE(target)
 		CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsE.range, ZiggsE.speed, ZiggsE.delay, ZiggsE.width, false, myHero)
 		if Chance >= 2 and GetDistance(CastPosition) < ZiggsE.range then
 			CastSpell(_E, CastPosition.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), CastPosition.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
+		end
+	elseif epreds[Config.adv.e.epreds] == "HPrediction" then
+		local EPos, EHitChance = HPred:GetPredict(HP_E, target, myHero)
+		if EHitChance >= 2 then
+			CastSpell(_E, EPos.x+math.random(Config.human.ejitter*-1,Config.human.ejitter), EPos.z+math.random(Config.human.ejitter*-1,Config.human.ejitter))
 		end
 	end
 end
@@ -832,6 +864,12 @@ function CastR()
 				CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
 			end
 		end
+		if rpreds[Config.adv.r.rpreds] == "HPrediction" then
+			local RPos, RHitChance = HPred:GetPredict(HP_R, target, myHero)
+			if RHitChance >= Config.adv.r.phase2hs then
+				CastSpell(_R, RPos.x+math.random(Config.human.rjitter*-1,Config.human.rjitter), RPos.z+math.random(Config.human.rjitter*-1,Config.human.rjitter))
+			end
+		end
 		if rpreds[Config.adv.r.phase1pred] == "S1mplePredict" then
 			preX, preZ = S1mplePredict(target)
 			if preX and preZ then
@@ -855,6 +893,12 @@ function CastR()
 				CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsR.range, ZiggsR.speed, ZiggsR.delay, ZiggsR.width, false, myHero)
 				if Chance >= Config.adv.r.phase2hs and GetDistance(CastPosition) < 5850 then
 					CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+				end
+			end
+			if rpreds[Config.adv.r.rpreds] == "HPrediction" then
+				local RPos, RHitChance = HPred:GetPredict(HP_R, target, myHero)
+				if RHitChance >= Config.adv.r.phase2hs then
+					CastSpell(_R, RPos.x+math.random(Config.human.rjitter*-1,Config.human.rjitter), RPos.z+math.random(Config.human.rjitter*-1,Config.human.rjitter))
 				end
 			end
 			if rpreds[Config.adv.r.phase2pred] == "S1mplePredict" then
@@ -881,6 +925,12 @@ function CastR()
 					CastPosition, Chance, PredPos = SPred:Predict(target, ZiggsR.range, ZiggsR.speed, ZiggsR.delay, ZiggsR.width, false, myHero)
 					if Chance >= Config.adv.r.phase3hs and GetDistance(CastPosition) < 5850 then
 						CastSpell(_R, CastPosition.x+randdstx, CastPosition.z+randdstz)
+					end
+				end
+				if rpreds[Config.adv.r.rpreds] == "HPrediction" then
+					local RPos, RHitChance = HPred:GetPredict(HP_R, target, myHero)
+					if RHitChance >= Config.adv.r.phase2hs then
+						CastSpell(_R, RPos.x+math.random(Config.human.rjitter*-1,Config.human.rjitter), RPos.z+math.random(Config.human.rjitter*-1,Config.human.rjitter))
 					end
 				end
 				if rpreds[Config.adv.r.phase3pred] == "S1mplePredict" then
