@@ -18,10 +18,10 @@
 	giannis koulis_418212 for reporting a Bug (Ulthelper was not working) i had, wich was in the end a not implemented function ^^ (Failed to put the Function into OnTick())
 ]]--
 local chkupdates = false --Set to "true" to check for updates without downloading them
-local autoupdate = false --Set to "true" for autoupdate
+local autoupdate = true --Set to "true" for autoupdate
 local chknews = true
 local iskeydownfix = true
-local version = "2.9"
+local version = "3.0"
 local lolversion = "5.18 HF"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
