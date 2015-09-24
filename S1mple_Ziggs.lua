@@ -1021,6 +1021,3 @@ function inRange(cmp1, cmp2, range)
 		return false
 	end
 end
-function function OnReset()
-	p("Reseted")
-end
