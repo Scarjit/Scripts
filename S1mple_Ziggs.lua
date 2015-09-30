@@ -21,8 +21,8 @@ local chkupdates = false --Set to "true" to check for updates without downloadin
 local autoupdate = true --Set to "true" for autoupdate
 local chknews = true
 local iskeydownfix = true
-local version = "3.0"
-local lolversion = "5.18 HF"
+local version = "3.1"
+local lolversion = "5.19"
 local Update_HOST = "raw.github.com"
 local Update_PATH = "/Scarjit/Scripts/master/S1mple_Ziggs.lua?rand="..math.random(1,10000)
 local Update_FILE_PATH = "S1mple_Ziggs.lua"
