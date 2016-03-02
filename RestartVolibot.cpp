@@ -14,14 +14,6 @@ using namespace std;
 
 int main()
 {
-	HWND hWnd;
-	STARTUPINFO sInfo;
-	_PROCESS_INFORMATION pInfo;
-
-	ZeroMemory(&sInfo, sizeof(sInfo));
-	sInfo.cb = sizeof(sInfo);
-	ZeroMemory(&pInfo, sizeof(pInfo));
-
 	ostringstream os;
 	os << "Stop-Process -processname Voli*";
 	string op = "open";
