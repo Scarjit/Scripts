@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include <cstdio>
 #include <windows.h>
-#include <tlhelp32.h>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -13,10 +12,11 @@
 
 using namespace std;
 
-int main() {
-	HWND                hWnd;
-	STARTUPINFO         sInfo;
-	PROCESS_INFORMATION pInfo;
+int main()
+{
+	HWND hWnd;
+	STARTUPINFO sInfo;
+	_PROCESS_INFORMATION pInfo;
 
 	ZeroMemory(&sInfo, sizeof(sInfo));
 	sInfo.cb = sizeof(sInfo);
@@ -27,13 +27,14 @@ int main() {
 	string op = "open";
 	string pspath = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\PowerShell.exe";
 	string param = os.str();
-	
+
 	ostringstream os2;
 	os2 << "Get-ChildItem Voli* | Foreach-Object{Start-Process $_}";
 	string param2 = os2.str();
-	
 
-	while (true) {
+
+	while (true)
+	{
 		cout << "Killing VoliBot..." << endl;
 		ShellExecuteA(NULL, op.c_str(), pspath.c_str(), param.c_str(), NULL, SW_HIDE);
 		this_thread::sleep_for(chrono::seconds(5));
@@ -42,7 +43,7 @@ int main() {
 		system("taskkill /F /IM LolClient.exe");
 		system("taskkill /F /IM \"League of Legends.exe\"");
 		this_thread::sleep_for(chrono::seconds(1));
-		
+
 		cout << "Starting Volibot" << endl;
 		ShellExecuteA(NULL, op.c_str(), pspath.c_str(), param2.c_str(), NULL, SW_HIDE);
 
@@ -51,3 +52,4 @@ int main() {
 	}
 	return 0;
 }
+
